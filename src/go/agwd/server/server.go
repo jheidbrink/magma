@@ -23,8 +23,10 @@ import (
 
 	"github.com/magma/magma/src/go/agwd/config"
 	"github.com/magma/magma/src/go/log"
+	pipelinedpb "github.com/magma/magma/src/go/protos/magma/pipelined"
 	sctpdpb "github.com/magma/magma/src/go/protos/magma/sctpd"
 	"github.com/magma/magma/src/go/service"
+	"github.com/magma/magma/src/go/service/pipelined"
 	"github.com/magma/magma/src/go/service/sctpd"
 )
 
@@ -127,8 +129,26 @@ func startSctpdUplinkServer(
 	go grpcServer.Serve(listener)
 }
 
+func startPipelinedServer(cfgr config.Configer, logger log.Logger) {
+	target := config.ParseTarget(cfgr.Config().GetPipelinedServiceTarget())
+	listener, err := net.Listen(target.Scheme, target.Endpoint)
+
+	if err != nil {
+		panic(errors.Wrapf(
+			err,
+			"net.Listen(network=%s, address=%s)",
+			target.Scheme,
+			target.Endpoint))
+	}
+	grpcServer := grpc.NewServer()
+	pipelinedServer := pipelined.NewPipelinedServer(logger)
+	pipelinedpb.RegisterPipelinedServer(grpcServer, pipelinedServer)
+	go grpcServer.Serve(listener)
+}
+
 func Start(cfgr config.Configer, logger log.Logger) {
 	sr := newServiceRouter(cfgr)
+	startPipelinedServer(cfgr, logger)
 	startSctpdDownlinkServer(cfgr, logger, sr)
 	startSctpdUplinkServer(cfgr, logger, sr)
 }

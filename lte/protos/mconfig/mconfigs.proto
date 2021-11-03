@@ -528,4 +528,7 @@ message AgwD {
   // The DSN to use. If the data source name is not set, the client is effectively
   // disabled.
   string sentry_dsn = 6;
+
+  // location (unix socket, ipv4 or ipv6 address) where Pipelined service is listening
+  string pipelined_service_target = 7;
 }
