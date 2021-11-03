@@ -43,8 +43,8 @@ func LogLevel(l mconfig.AgwD_LogLevel) log.Level {
 }
 
 const (
-	ipv4Scheme = "ipv4"
-	ipv6Scheme = "ipv6"
+	ipv4Scheme = "tcp4"
+	ipv6Scheme = "tcp6"
 )
 
 // ParseTarget takes a target in string form and returns a resolved Target.
@@ -86,7 +86,8 @@ func newDefaultConfig() *mconfig.AgwD {
 		MmeSctpdDownstreamServiceTarget: "unix:///tmp/mme_sctpd_downstream.sock",
 		MmeSctpdUpstreamServiceTarget:   "unix:///tmp/mme_sctpd_upstream.sock",
 		// Sentry is disabled if DSN is not set.
-		SentryDsn: "",
+		SentryDsn:              "",
+		PipelinedServiceTarget: "tcp4:0.0.0.0:12345",
 	}
 }
 
