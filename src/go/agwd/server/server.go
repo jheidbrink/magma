@@ -107,13 +107,24 @@ func startSctpdDownlinkServer(
 	grpcServer := grpc.NewServer()
 	sctpdDownlinkServer := sctpd.NewProxyDownlinkServer(logger, sr)
 	sctpdpb.RegisterSctpdDownlinkServer(grpcServer, sctpdDownlinkServer)
-	go grpcServer.Serve(listener)
+	go func(){
+		if err := grpcServer.Serve(listener); err != nil {
+			panic(errors.Wrapf(
+				err,
+				"startSctpdDownlinkServer(network=%s, address=%s)",
+				target.Scheme,
+				target.Endpoint))
+		}
+	}()
 }
 
 func startSctpdUplinkServer(
 	cfgr config.Configer, logger log.Logger, sr service.Router,
 ) {
 	target := config.ParseTarget(cfgr.Config().GetSctpdUpstreamServiceTarget())
+	if target.Scheme == "unix" {
+		cleanupUnixSocketOrDie(logger, target.Endpoint)
+	}
 	listener, err := net.Listen(target.Scheme, target.Endpoint)
 	if err != nil {
 		panic(errors.Wrapf(
@@ -126,7 +137,15 @@ func startSctpdUplinkServer(
 	grpcServer := grpc.NewServer()
 	sctpdUplinkServer := sctpd.NewProxyUplinkServer(logger, sr)
 	sctpdpb.RegisterSctpdUplinkServer(grpcServer, sctpdUplinkServer)
-	go grpcServer.Serve(listener)
+	go func(){
+		if err := grpcServer.Serve(listener); err != nil {
+			panic(errors.Wrapf(
+				err,
+				"startSctpdUplinkServer(network=%s, address=%s)",
+				target.Scheme,
+				target.Endpoint))
+		}
+	}()
 }
 
 func startPipelinedServer(cfgr config.Configer, logger log.Logger) {
@@ -143,12 +162,20 @@ func startPipelinedServer(cfgr config.Configer, logger log.Logger) {
 	grpcServer := grpc.NewServer()
 	pipelinedServer := pipelined.NewPipelinedServer(logger)
 	pipelinedpb.RegisterPipelinedServer(grpcServer, pipelinedServer)
-	go grpcServer.Serve(listener)
+	go func(){
+		if err := grpcServer.Serve(listener); err != nil {
+			panic(errors.Wrapf(
+				err,
+				"startPipelinedServer(network=%s, address=%s)",
+				target.Scheme,
+				target.Endpoint))
+		}
+	}()
 }
 
 func Start(cfgr config.Configer, logger log.Logger) {
 	sr := newServiceRouter(cfgr)
 	startPipelinedServer(cfgr, logger)
-	startSctpdDownlinkServer(cfgr, logger, sr)
 	startSctpdUplinkServer(cfgr, logger, sr)
+	startSctpdDownlinkServer(cfgr, logger, sr)
 }
