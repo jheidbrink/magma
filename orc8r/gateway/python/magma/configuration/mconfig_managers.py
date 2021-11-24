@@ -13,6 +13,7 @@ limitations under the License.
 import abc
 import contextlib
 import json
+import logging
 import os
 from typing import Any, Generic, TypeVar
 
@@ -172,6 +173,25 @@ class MconfigManagerImpl(MconfigManager[GatewayConfigs]):
         service_mconfig = mconfig.configs_by_key[service_name]
         return unpack_mconfig_any(service_mconfig, mconfig_struct)
 
+    def load_shared_mconfig(
+            self,
+            shared_mconfig_struct: Any,
+    ) -> Any:
+        mconfig = self.load_mconfig()
+
+        logging.error("-------- config keys ---------")
+        for key in mconfig.configs_by_key.keys():
+            logging.error(key)
+
+        if 'shared_mconfig' not in mconfig.configs_by_key: # AZB: guess this is not really needed once it works? anything else instead?
+            raise LoadConfigError(
+                "Shared Config is missing in mconfig"
+            )
+
+        shared_mconfig = mconfig.configs_by_key['shared_mconfig'] # AZB: I guess this is the correct string. It is the one that is used in orc8r/cloud/go/services/orchestrator/servicers/builder_servicer.go when config values are passed to mconfig
+        return unpack_mconfig_any(shared_mconfig, shared_mconfig_struct)
+
+    # AZB: Do we need an equivalent to this one for shared mconfig?
     def load_service_mconfig_as_json(self, service_name) -> Any:
         cfg_file_name = self._get_mconfig_file_path()
         with open(cfg_file_name, 'r', encoding='utf-8') as f:
@@ -233,3 +253,9 @@ class MconfigManagerImpl(MconfigManager[GatewayConfigs]):
             return self.MCONFIG_PATH
         else:
             return os.path.join(DEFAULT_MCONFIG_DIR, self.MCONFIG_FILE_NAME)
+
+    # def _get_mconfig_file_path(self):
+    #     import logging
+    #     logging.error("--------- DEFAULT_MCONFIG_DIR ---------")
+    #     logging.error(DEFAULT_MCONFIG_DIR)
+    #     return os.path.join(DEFAULT_MCONFIG_DIR, self.MCONFIG_FILE_NAME)

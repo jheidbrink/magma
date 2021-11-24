@@ -23,6 +23,8 @@ from typing import Any, Dict, List, Optional
 
 import grpc
 import pkg_resources
+from orc8r.protos.mconfig import mconfigs_pb2
+
 from magma.common.log_count_handler import MsgCounterHandler
 from magma.common.log_counter import ServiceLogErrorReporter
 from magma.common.metrics_export import get_metrics
@@ -85,6 +87,14 @@ class MagmaService(Service303Servicer):
         self._mconfig_metadata = None
         self._mconfig_manager = get_mconfig_manager()
         self.reload_mconfig()
+
+        # Load the shared managed config
+        logging.error("----------- initializing '_shared_mconfig' -----------")
+        self._shared_mconfig = mconfigs_pb2.SharedMconfig() # from orc8r/protos/... (alternatively use the one from lte/ , but that one is sentry specific and supposed to be removed in 1.7)
+        logging.error("----------- initialized to: %s", type(self._shared_mconfig))
+        #self._shared_mconfig_metadata = None # AZB: Not sure this is necessary. Metadata doesn't seem to be service specific.
+        #self._mconfig_manager = get_mconfig_manager() # not sure about this line. already set above.
+        self.reload_shared_mconfig()
 
         self._state = ServiceInfo.STARTING
         self._health = ServiceInfo.APP_UNHEALTHY
@@ -185,6 +195,11 @@ class MagmaService(Service303Servicer):
         return self._mconfig
 
     @property
+    def shared_mconfig(self):
+        """Return the shared managed config"""
+        return self._shared_mconfig
+
+    @property
     def mconfig_metadata(self):
         """Return the metadata of the managed config"""
         return self._mconfig_metadata
@@ -213,6 +228,21 @@ class MagmaService(Service303Servicer):
             )
             self._mconfig_metadata = \
                 self._mconfig_manager.load_mconfig_metadata()
+        except LoadConfigError as e:
+            logging.warning(e)
+
+    def reload_shared_mconfig(self):
+        """Reload the managed config for the service"""
+        try:
+            # reload mconfig manager in case feature flag for streaming changed
+            self._mconfig_manager = get_mconfig_manager() # AZB: could this lead to conflicts?
+            self._shared_mconfig = self._mconfig_manager.load_shared_mconfig(
+                self._shared_mconfig,
+            )
+            logging.error("------- reload_shared_mconfig ---------")
+            logging.error("shared_mconfig: ", type(self._shared_mconfig))
+            #self._mconfig_metadata = \
+             #   self._mconfig_manager.load_mconfig_metadata() # AZB: WHAT HERE?
         except LoadConfigError as e:
             logging.warning(e)
 
