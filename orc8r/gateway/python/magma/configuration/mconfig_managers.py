@@ -177,19 +177,8 @@ class MconfigManagerImpl(MconfigManager[GatewayConfigs]):
             self,
             shared_mconfig_struct: Any,
     ) -> Any:
-        mconfig = self.load_mconfig()
+        return self.load_service_mconfig('shared_config', shared_mconfig_struct)
 
-        logging.error("-------- config keys ---------")
-        for key in mconfig.configs_by_key.keys():
-            logging.error(key)
-
-        if 'shared_mconfig' not in mconfig.configs_by_key: # AZB: guess this is not really needed once it works? anything else instead?
-            raise LoadConfigError(
-                "Shared Config is missing in mconfig"
-            )
-
-        shared_mconfig = mconfig.configs_by_key['shared_mconfig'] # AZB: I guess this is the correct string. It is the one that is used in orc8r/cloud/go/services/orchestrator/servicers/builder_servicer.go when config values are passed to mconfig
-        return unpack_mconfig_any(shared_mconfig, shared_mconfig_struct)
 
     # AZB: Do we need an equivalent to this one for shared mconfig?
     def load_service_mconfig_as_json(self, service_name) -> Any:
@@ -217,7 +206,7 @@ class MconfigManagerImpl(MconfigManager[GatewayConfigs]):
         # protobuf symbol database
         json_mconfig = json.loads(serialized_value)
         cfgs_by_key_json = json_mconfig.get('configs_by_key', {})
-        cfgs_by_key_json.update(json_mconfig.get('configsByKey', {}))
+        cfgs_by_key_json.update(json_mconfig.get('configsByKey', {})) # TODO is this still used or can it be removed?
         filtered_cfgs_by_key = filter_configs_by_key(cfgs_by_key_json)
 
         # Set configs to filtered map, re-dump and parse

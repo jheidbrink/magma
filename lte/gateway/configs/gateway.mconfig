@@ -158,8 +158,8 @@
       "sentry_config": {
         "dsn_python": "https://292a6f85ea294d12937ec876e40dd907@o1036395.ingest.sentry.io/6005142",
         "dsn_native": "",
-        "upload_mme_log": "false",
-        "sample_rate": "1.0"
+        "upload_mme_log": false,
+        "sample_rate": 1.0
       }
     }
   }
