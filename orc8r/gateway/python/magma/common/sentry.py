@@ -18,6 +18,8 @@ from typing import Any, Dict, Optional
 
 import sentry_sdk
 import snowflake
+from orc8r.protos.mconfig import mconfigs_pb2
+
 from magma.configuration.service_configs import get_service_config_value
 
 CONTROL_PROXY = 'control_proxy'
@@ -81,64 +83,30 @@ def get_sentry_status(service_name: str) -> SentryStatus:
         return SentryStatus.DISABLED
 
 
-def sentry_init(service_name: str): # AZB: Type is currently unclear to me.
+def sentry_init(service_name: str, sentry_config: mconfigs_pb2.SharedSentryConfig) -> None:
     """Initialize connection and start piping errors to sentry.io."""
 
     sentry_status = get_sentry_status(service_name)
     if sentry_status == SentryStatus.DISABLED:
         return
 
-    sentry_url = get_service_config_value(
-        CONTROL_PROXY,
-        SENTRY_URL,
-        default='',
-    )
-    if not sentry_url:
+    if not sentry_config.dsn_python:
         return
-
-    sentry_sample_rate = get_service_config_value(
-        CONTROL_PROXY,
-        SENTRY_SAMPLE_RATE,
-        default=1.0,
-    )
-
-    logging.info("--------- Sentry Configs ---------")
-    logging.info("sentry_url: ", sentry_url)
-    logging.info("sentry_sample_rate: ", sentry_sample_rate)
-
-    sentry_sdk.init(
-        dsn=sentry_url,
-        release=os.getenv(COMMIT_HASH),
-        traces_sample_rate=sentry_sample_rate,
-        before_send=_ignore_if_not_marked if sentry_status == SentryStatus.SEND_SELECTED_ERRORS else None,
-    )
-    sentry_sdk.set_tag(HWID, snowflake.snowflake())
-    sentry_sdk.set_tag(SERVICE_NAME, service_name)
-
-    logging.error("Hello Sentry from %s with control_proxy config", service_name)
-
-
-def sentry_init_mconfig(service_name: str, sentry_config): # AZB: Type is currently unclear to me.
-    """Initialize connection and start piping errors to sentry.io."""
-
-    sentry_status = get_sentry_status(service_name)
-    if sentry_status == SentryStatus.DISABLED:
-        return
-
-    logging.info("--------- Sentry Configs ---------")
-    logging.info("sentry_config: %s", dir(sentry_config))
-    logging.info("dsn_python: %s", sentry_config.dsn_python)
-    logging.info("sample_rate: %f", sentry_config.sample_rate)
-
-    # AZB: capture the case that no sentry URL is provided
 
     sentry_sdk.init(
         dsn=sentry_config.dsn_python,
         release=os.getenv(COMMIT_HASH),
-        traces_sample_rate=sentry_config.sample_rate, #AZB: this is a bit confusing to me, since there are two sample rates in sentry. one for tracing and one "normal" sampling rate
+        traces_sample_rate=sentry_config.sample_rate,
         before_send=_ignore_if_not_marked if sentry_status == SentryStatus.SEND_SELECTED_ERRORS else None,
     )
     sentry_sdk.set_tag(HWID, snowflake.snowflake())
     sentry_sdk.set_tag(SERVICE_NAME, service_name)
 
+    # AZB: Remove before pushing
+    logging.info("--------- Sentry Configs ---------")
+    logging.info("sentry_config: %s", sentry_config)
+    logging.info("dsn_python: %s", sentry_config.dsn_python)
+    logging.info("sample_rate: %f", sentry_config.sample_rate)
+    logging.info("dsn_native: %s", sentry_config.dsn_native)
+    logging.info("upload_mme_log: %s", sentry_config.upload_mme_log)
     logging.error("Hello Sentry from %s with mconfig", service_name)

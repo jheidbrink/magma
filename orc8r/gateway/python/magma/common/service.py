@@ -88,9 +88,7 @@ class MagmaService(Service303Servicer):
         self._mconfig_metadata = None
         self._mconfig_manager = get_mconfig_manager()
         self.reload_mconfig()
-
-        #logging.error("----------- initializing '_shared_mconfig' -----------")
-        #logging.error("----------- initialized to: %s", type(self._shared_mconfig))
+        logging.error(self._shared_mconfig)
 
         self._state = ServiceInfo.STARTING
         self._health = ServiceInfo.APP_UNHEALTHY
@@ -215,17 +213,18 @@ class MagmaService(Service303Servicer):
 
     def reload_mconfig(self):
         """Reload the managed config for the service"""
+        # reload mconfig manager in case feature flag for streaming changed
+        self._mconfig_manager = get_mconfig_manager()
+        self._mconfig_metadata = self._mconfig_manager.load_mconfig_metadata()
         try:
-            # reload mconfig manager in case feature flag for streaming changed
-            self._mconfig_manager = get_mconfig_manager()
             self._mconfig = self._mconfig_manager.load_service_mconfig(
                 self._name,
                 self._mconfig,
             )
-            self._mconfig_metadata = \
-                self._mconfig_manager.load_mconfig_metadata()
         except LoadConfigError as e:
             logging.warning(e)
+
+        self._shared_mconfig = self._mconfig_manager.load_service_mconfig('shared_mconfig', mconfigs_pb2.SharedMconfig())
 
     def add_operational_states(self, states: List[State]):
         """Add a list of states into the service

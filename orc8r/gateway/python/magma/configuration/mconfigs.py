@@ -40,7 +40,7 @@ def filter_configs_by_key(configs_by_key: Dict[str, TAny]) -> Dict[str, TAny]:
 
     filtered_configs_by_key = {}
     for srv, cfg in configs_by_key.items():
-        if srv not in services + ['shared_config']:
+        if srv not in services | {'shared_mconfig'}:
             continue
         filtered_configs_by_key[srv] = cfg
     return filtered_configs_by_key

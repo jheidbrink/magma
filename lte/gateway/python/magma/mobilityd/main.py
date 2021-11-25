@@ -17,8 +17,7 @@ from typing import Any, Optional
 from lte.protos.mconfig import mconfigs_pb2
 from lte.protos.subscriberdb_pb2_grpc import SubscriberDBStub
 from magma.common.redis.client import get_default_client
-#from magma.common.sentry import sentry_init
-from magma.common.sentry import sentry_init_mconfig
+from magma.common.sentry import sentry_init
 from magma.common.service import MagmaService
 from magma.common.service_registry import ServiceRegistry
 from magma.mobilityd.ip_address_man import IPAddressManager
@@ -149,19 +148,9 @@ def main():
     # Load service configs and mconfig
     config = service.config
     mconfig = service.mconfig
-    shared_mconfig = service.shared_mconfig
-
-    logging.info("-------- Config --------")
-    logging.info(config)
-    logging.info("-------- MConfig --------")
-    logging.info(mconfig)
-    logging.info("-------- Shared MConfig --------")
-    logging.info(type(shared_mconfig))
-    #logging.info(type(shared_mconfig.sentry_config.dsn_python))
 
     # Optionally pipe errors to Sentry
-    sentry_init_mconfig(service_name=service.name, sentry_config=shared_mconfig.sentry_config)
-    #sentry_init_mconfig(service_name=service.name, sentry_config=shared_mconfig.sentry_config)
+    sentry_init(service_name=service.name, sentry_config=service.shared_mconfig.sentry_config)
 
     multi_apn = config.get('multi_apn', mconfig.multi_apn_ip_alloc)
     static_ip_enabled = config.get('static_ip', mconfig.static_ip_enabled)

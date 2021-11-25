@@ -17,6 +17,8 @@ import logging
 import os
 from typing import Any, Generic, TypeVar
 
+from orc8r.protos.mconfig import mconfigs_pb2
+
 import magma.configuration.events as magma_configuration_events
 from google.protobuf import json_format
 from magma.common import serialization_utils
@@ -165,22 +167,18 @@ class MconfigManagerImpl(MconfigManager[GatewayConfigs]):
         mconfig_struct: Any,
     ) -> Any:
         mconfig = self.load_mconfig()
+
+        logging.error(list(mconfig.configs_by_key.keys()))
+        logging.error(mconfig.configs_by_key['shared_mconfig'])
+
         if service_name not in mconfig.configs_by_key:
             raise LoadConfigError(
-                "Service ({}) missing in mconfig".format(service_name),
+                "Key ({}) missing in mconfig.configs_by_key".format(service_name),
             )
 
         service_mconfig = mconfig.configs_by_key[service_name]
         return unpack_mconfig_any(service_mconfig, mconfig_struct)
 
-    def load_shared_mconfig(
-            self,
-            shared_mconfig_struct: Any,
-    ) -> Any:
-        return self.load_service_mconfig('shared_config', shared_mconfig_struct)
-
-
-    # AZB: Do we need an equivalent to this one for shared mconfig?
     def load_service_mconfig_as_json(self, service_name) -> Any:
         cfg_file_name = self._get_mconfig_file_path()
         with open(cfg_file_name, 'r', encoding='utf-8') as f:
@@ -242,9 +240,3 @@ class MconfigManagerImpl(MconfigManager[GatewayConfigs]):
             return self.MCONFIG_PATH
         else:
             return os.path.join(DEFAULT_MCONFIG_DIR, self.MCONFIG_FILE_NAME)
-
-    # def _get_mconfig_file_path(self):
-    #     import logging
-    #     logging.error("--------- DEFAULT_MCONFIG_DIR ---------")
-    #     logging.error(DEFAULT_MCONFIG_DIR)
-    #     return os.path.join(DEFAULT_MCONFIG_DIR, self.MCONFIG_FILE_NAME)
