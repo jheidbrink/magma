@@ -202,7 +202,7 @@ class MconfigManagerImpl(MconfigManager[GatewayConfigs]):
         # protobuf symbol database
         json_mconfig = json.loads(serialized_value)
         cfgs_by_key_json = json_mconfig.get('configs_by_key', {})
-        cfgs_by_key_json.update(json_mconfig.get('configsByKey', {})) # TODO is this still used or can it be removed?
+        cfgs_by_key_json.update(json_mconfig.get('configsByKey', {}))
         filtered_cfgs_by_key = filter_configs_by_key(cfgs_by_key_json)
 
         # Set configs to filtered map, re-dump and parse
