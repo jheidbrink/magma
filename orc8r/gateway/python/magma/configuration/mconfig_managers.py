@@ -156,9 +156,6 @@ class MconfigManagerImpl(MconfigManager[GatewayConfigs]):
     def load_mconfig(self) -> GatewayConfigs:
         cfg_file_name = self._get_mconfig_file_path()
 
-        logging.error("------- load_mconfig: cfg_file_name ---------")
-        logging.error(cfg_file_name)
-
         try:
             with open(cfg_file_name, 'r', encoding='utf-8') as cfg_file:
                 mconfig_str = cfg_file.read()
@@ -171,10 +168,6 @@ class MconfigManagerImpl(MconfigManager[GatewayConfigs]):
         mconfig_struct: Any,
     ) -> Any:
         mconfig = self.load_mconfig()
-
-        logging.error(list(mconfig.configs_by_key.keys()))
-        logging.error("shared_mconfig: ")
-        logging.error(mconfig.configs_by_key['shared_mconfig'])
 
         if service_name not in mconfig.configs_by_key:
             raise LoadConfigError(

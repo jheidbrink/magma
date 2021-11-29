@@ -88,8 +88,6 @@ class MagmaService(Service303Servicer):
         self._mconfig_metadata = None
         self._mconfig_manager = get_mconfig_manager()
         self.reload_mconfig()
-        logging.error("--------- '_shared_mconfig' ---------")
-        logging.error(self._shared_mconfig)
 
         self._state = ServiceInfo.STARTING
         self._health = ServiceInfo.APP_UNHEALTHY

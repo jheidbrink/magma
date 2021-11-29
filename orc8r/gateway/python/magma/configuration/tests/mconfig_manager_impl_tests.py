@@ -53,7 +53,6 @@ class MconfigManagerImplTest(unittest.TestCase):
             }
         }
         ''' % magmad_fixture_serialized
-        print(fixture)
         get_service_config_value_mock.return_value = {
             'magma_services': ['foo'],
         }

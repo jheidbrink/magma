@@ -101,12 +101,3 @@ def sentry_init(service_name: str, sentry_config: mconfigs_pb2.SharedSentryConfi
     )
     sentry_sdk.set_tag(HWID, snowflake.snowflake())
     sentry_sdk.set_tag(SERVICE_NAME, service_name)
-
-    # AZB: Remove before pushing
-    logging.info("--------- Sentry Configs ---------")
-    logging.info("sentry_config: %s", sentry_config)
-    logging.info("dsn_python: %s", sentry_config.dsn_python)
-    logging.info("sample_rate: %f", sentry_config.sample_rate)
-    logging.info("dsn_native: %s", sentry_config.dsn_native)
-    logging.info("upload_mme_log: %s", sentry_config.upload_mme_log)
-    logging.error("Hello Sentry from %s with mconfig", service_name)
