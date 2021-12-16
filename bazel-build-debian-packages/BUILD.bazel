@@ -1,0 +1,50 @@
+#load("@rules_pkg//pkg:pkg.bzl", "pkg_tar")
+#load("@rules_pkg//pkg:deb.bzl", "pkg_deb")
+load("@rules_pkg//:pkg.bzl", "pkg_deb", "pkg_tar")
+
+#pkg_tar(
+#    name = "bazel-bin",
+#    strip_prefix = "/src",
+#    package_dir = "/usr/bin",
+#    srcs = ["//src:bazel"],
+#    mode = "0755",
+#)
+#
+#pkg_tar(
+#    name = "bazel-tools",
+#    strip_prefix = "/",
+#    package_dir = "/usr/share/lib/bazel/tools",
+#    srcs = ["//tools:package-srcs"],
+#    mode = "0644",
+#)
+#
+#pkg_tar(
+#    name = "debian-data",
+#    extension = "tar.gz",
+#    deps = [
+#        ":bazel-bin",
+#        ":bazel-tools",
+#    ],
+#)
+pkg_tar(
+    name = "hello-tar",
+    #srcs = ["hello.txt"],
+    srcs = ["//bazel-build-debian-packages/hello:hello-txt"],
+    package_dir = "/usr/bin",
+)
+
+pkg_deb(
+    name = "hello-debian",
+    architecture = "amd64",
+    built_using = "unzip (6.0.1)",
+    data = ":hello-tar",
+    depends = [
+        "zlib1g-dev",
+        "unzip",
+    ],
+    #description_file = "debian/description",
+    #homepage = "http://bazel.build",
+    maintainer = "The Nerd Group",
+    package = "hello-debian",
+    version = "0.1.1",
+)

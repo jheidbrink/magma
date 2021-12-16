@@ -1,0 +1,8 @@
+filegroup(
+    name = "hello-txt",
+    srcs = [],
+    data = ["hello"],
+    output_group = "",
+    tags = [""],
+    visibility = ["//visibility:public"],
+)
