@@ -23,7 +23,7 @@ After=sctpd.service
 [Service]
 Type=simple
 EnvironmentFile=/etc/environment
-ExecStart=/usr/local/bin/mme -c /var/opt/magma/tmp/mme.conf -s /var/opt/magma/tmp/spgw.conf
+ExecStart=/home/vagrant/magma/bazel-bin/lte/gateway/c/core/oai_mme -c /var/opt/magma/tmp/mme.conf -s /var/opt/magma/tmp/spgw.conf
 MemoryAccounting=yes
 MemoryLimit=13%
 MemoryMin=512M
