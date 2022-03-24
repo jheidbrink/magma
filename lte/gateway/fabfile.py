@@ -286,6 +286,7 @@ def integ_test(
         gateway_ip = gateway_host.split('@')[1].split(':')[0]
 
     execute(_dist_upgrade)
+    execute(_build_mme_with_bazel)
     execute(_build_magma)
     execute(_run_sudo_python_unit_tests)
     execute(_start_gateway)
@@ -574,6 +575,11 @@ def _build_magma():
     """
     with cd(AGW_ROOT):
         run('make')
+
+
+def _build_mme_with_bazel():
+    with cd("$MAGMA_ROOT"):
+        run('bazel build //lte/gateway/c/core:oai_mme')
 
 
 def _oai_coverage():
