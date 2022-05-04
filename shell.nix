@@ -16,6 +16,10 @@ in
     pkgs.git
     pkgs.cacert
     pkgs.zlib  # required by jdk
-    pkgs.which # for debugging the environment
+    pkgs.jdk11_headless
+    # Debug tools
+    pkgs.which
+    pkgs.glibc.bin  # for ldd
+    pkgs.binutils  # for readelf
   ];
 }).env

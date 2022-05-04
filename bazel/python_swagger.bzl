@@ -102,7 +102,7 @@ py_swagger = rule(
             allow_single_file = [".yml"],
         ),
         "_jdk": attr.label(
-            default = Label("@bazel_tools//tools/jdk:current_java_runtime"),
+            default = Label("@bazel_tools//tools/jdk:current_host_java_runtime"),
             providers = [java_common.JavaRuntimeInfo],
         ),
         "_swagger_cli": attr.label(
