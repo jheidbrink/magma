@@ -15,5 +15,7 @@ in
     pkgs.python38
     pkgs.git
     pkgs.cacert
+    pkgs.zlib  # required by jdk
+    pkgs.which # for debugging the environment
   ];
 }).env
