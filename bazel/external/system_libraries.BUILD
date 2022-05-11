@@ -14,15 +14,24 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
+config_setting(
+    name = "use_usr_lib_folly_so",
+    values = {"define": "usr_lib_folly_so=1"},
+)
+
 cc_library(
     name = "folly",
-    srcs = ["usr/local/lib/libfolly.so"],
+    srcs = select({
+        ":use_usr_lib_folly_so": ["usr/lib/libfolly.so"],
+        "//conditions:default": ["usr/local/lib/libfolly.so"],
+    }),
     linkopts = [
-        "-ldl",
-        "-levent",
-        "-ldouble-conversion",
-        "-lgflags",
-    ],
+            "-ldl",
+            "-levent",
+            "-ldouble-conversion",
+            "-lgflags",
+        ]
+    }),
 )
 
 cc_library(

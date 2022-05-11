@@ -21,5 +21,7 @@ in
     pkgs.which
     pkgs.glibc.bin  # for ldd
     pkgs.binutils  # for readelf
+    pkgs.cmake  # for cc_binary targets
+    pkgs.folly  # C++ library (still) used by Magma
   ];
 }).env
