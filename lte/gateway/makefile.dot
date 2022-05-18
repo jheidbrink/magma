@@ -1,0 +1,98 @@
+digraph G {
+  all;
+    build -> all
+
+  build;
+
+    build_python -> build;
+    build_common -> build;
+    build_oia -> build;
+    build_sctpd -> build;
+    build_session_manager -> build;
+    build_connection_tracker -> build;
+    build_envoy_controller -> build;
+    build_li_agent -> build;
+
+  build_python;
+  build_common;
+  build_oia[label="oai", color="brown"];
+  build_sctpd[label="sctpd", color="brown"];
+  build_session_manager[label="session_manager", color="brown"];
+    build_common -> build_session_manager;
+  build_connection_tracker[label="connection_tracker", color="brown"];
+  build_envoy_controller[label="envoy_controller", color="brown"];
+  build_li_agent[label="li_agent", color="brown"];
+
+  smf_build;
+    build_session_manager -> smf_build;
+
+  test;
+    test_python -> test;
+    test_python[color="blue"];
+      stop -> test_python;
+      py__test_all -> test_python;
+      py__test_all[label="test_all", color="blueviolet"];
+
+        py__buildenv -> py__test_all;
+        py__nosetests -> py__test_all;
+        py__nosetests[label="nosetests", color="blueviolet"];
+          py__install_virtualenv -> py__nosetests;
+          py__install_virtualenv[label="install_virtualenv", color="blueviolet"];
+
+          py__coverage -> py__test_all;
+          py__coverage[label="coverage", color="blueviolet"];
+
+            py__install_virtualenv -> py__coverage;
+
+        py__lte_test -> py__test_all;
+        py__lte_test[label="lte_test", color="blueviolet"];
+
+        py__orc8r_test -> py__test_all;
+        py__orc8r_test[label="orc8r_test", color="blueviolet"];
+
+    test_common -> test;
+    test_oai -> test;
+    test_sctpd -> test;
+    test_session_manager -> test
+
+    build_common -> test_session_manager
+
+  test_sudo_python[color="blue"];
+    stop -> test_sudo_python;
+    py__test_all -> test_sudo_python;
+
+  clean[color="red"];
+    clean_python -> clean;
+    clean_envoy_controller -> clean;
+
+  clean_python[color="blue"];
+
+  clean_envoy_controller[color="red"];
+
+  build_python[color="blue"];
+    stop -> build_python;
+    py__buildenv -> build_python;
+    py__buildenv[color="blueviolet"];
+      py__setupenv -> py__buildenv;
+      py__protos -> py__buildenv;
+      py__swagger -> py__buildenv;
+      py__lte_gateway_python_build -> py__buildenv;
+      py__orc8r_gateway_python_build -> py__buildenv;
+      py__swagger -> py__buildenv;
+      py__py_patches -> py__buildenv;
+
+      py__setupenv[color="blueviolet"];
+      py__protos[color="blueviolet"];
+      py__swagger[color="blueviolet"];
+      py__lte_gateway_python_build[color="blueviolet"];
+      py__orc8r_gateway_python_build[color="blueviolet"];
+      py__swagger[color="blueviolet"];
+      py__py_patches[color="blueviolet"];
+
+
+  build_common[color="brown"];
+
+  benchmark_pb[color="red"];
+
+  build_c[color="green"];
+}
