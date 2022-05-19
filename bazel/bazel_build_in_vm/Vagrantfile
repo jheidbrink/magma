@@ -1,0 +1,16 @@
+Vagrant.configure("2") do |config|
+  config.vm.synced_folder "../..", "/home/vagrant/magma"
+  config.vm.define :bazelbuild, primary: true do |bazelbuild|
+    config.vm.provider "virtualbox" do |vb|
+      vb.memory=9000
+      vb.cpus=3
+    end
+    config.vm.box = "ubuntu/focal64"
+    config.vm.provision :shell, inline: "swapoff -a && fallocate -l 4G /swapfile && chmod 0600 /swapfile && mkswap /swapfile && swapon /swapfile && echo '/swapfile none swap sw 0 0' >> /etc/fstab && swapon -a"
+    config.vm.provision :shell, inline: "echo vm.swappiness = 10 >> /etc/sysctl.conf && echo vm.vfs_cache_pressure = 50 >> /etc/sysctl.conf && sysctl -p"
+    # Setup environment (copied from bazel-base-container Dockerfile):
+    config.vm.provision :shell, path: "setup_bazel-base_environment.sh", env: {"MAGMA_ROOT" => "/home/vagrant/magma"}
+    config.vm.provision :shell, inline: "if ! [ -x /usr/bin/bazel ]; then wget --progress=dot:giga https://github.com/bazelbuild/bazelisk/releases/download/v1.10.0/bazelisk-linux-amd64 && chmod +x bazelisk-linux-amd64 && cp bazelisk-linux-amd64 /usr/bin/bazel && echo $PATH && cd /home/vagrant/magma && /usr/bin/bazel query //...; fi"
+    config.vm.provision :shell, inline: "chown --recursive vagrant:vagrant /tmp/bazel"
+  end
+end

@@ -1,0 +1,16 @@
+name: bazel build in VM
+on:
+  workflow_dispatch:
+jobs:
+  bazel_build_in_vm:
+    runs-on: macos-10.15
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install prerequisites
+        run: |
+          vagrant plugin install vagrant-vbguest vagrant-disksize
+      - name: Bazel build
+        run: |
+          cd bazel/bazel_build_in_vm
+          vagrant up
+          vagrant ssh --command "cd magma && bazel/scripts/remote_cache_bazelrc_setup.sh vm ${{ secrets.BAZEL_REMOTE_PASSWORD }} && bazel build //..."
