@@ -5,6 +5,10 @@ name: LTE integ test with Bazel-built binaries
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
     inputs:
+      remote_cache:
+        description: Use the remote cache
+        type: boolean
+        default: true
       without_fabric:
         description: Dont even use Fabric to run the actual integ tests
         type: boolean
@@ -27,6 +31,7 @@ jobs:
     steps:
       - name: Print inputs
         run: |
+          echo "remote_cache: ${{ github.event.inputs.remote_cache }}"
           echo "Without Fabric: ${{ github.event.inputs.without_fabric }}"
       - uses: actions/checkout@v2
         with:
@@ -55,6 +60,7 @@ jobs:
           export MAGMA_DEV_MEMORY_MB=9216
           vagrant up magma
       - name: Setup remote cache
+        if: github.event.inputs.remote_cache == 'true'
         run:  |
           bazel/scripts/remote_cache_bazelrc_setup.sh vm "${{ secrets.BAZEL_REMOTE_PASSWORD }}"
       - name: Build with Bazel
