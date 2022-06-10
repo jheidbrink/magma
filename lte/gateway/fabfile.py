@@ -303,7 +303,7 @@ def integ_test(
         )
     else:
         ansible_setup(trf_host, "trfserver", "magma_trfserver.yml")
-    execute(_start_trfserver)
+    execute(start_trfserver)
 
     # Run the tests: use the provided test machine if given, else default to
     # the vagrant machine
@@ -331,7 +331,7 @@ def integ_test_nobuild():
     setup_env_vagrant()
     execute(_run_sudo_python_unit_tests)
     _trf_host = vagrant_setup('magma_trfserver', False)
-    execute(_start_trfserver)
+    execute(start_trfserver)
     _test_host = vagrant_setup('magma_test', False)
 
     execute(_make_integ_tests)
@@ -549,7 +549,7 @@ def build_and_start_magma_trf(test_host=None, destroy_vm='False', provision_vm='
         vagrant_setup('magma_trfserver', destroy_vm, force_provision=provision_vm)
     else:
         ansible_setup(test_host, "test", "magma_test.yml")
-    execute(_start_trfserver)
+    execute(start_trfserver)
 
 
 def start_magma(test_host=None, destroy_vm='False', provision_vm='False'):
@@ -622,7 +622,7 @@ def _set_service_config_var(service, var_name, value):
     )
 
 
-def _start_trfserver():
+def start_trfserver():
     """ Starts the traffic gen server"""
     # disable-tcp-checksumming
     # trfgen-server non daemon
