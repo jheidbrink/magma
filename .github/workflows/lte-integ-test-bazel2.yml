@@ -62,7 +62,7 @@ jobs:
       - name: Setup remote cache
         if: github.event.inputs.remote_cache == 'true'
         run:  |
-          bazel/scripts/remote_cache_bazelrc_setup.sh vm "${{ secrets.BAZEL_REMOTE_PASSWORD }}"
+          bazel/scripts/remote_cache_bazelrc_setup.sh vm-bazel-integ-test "${{ secrets.BAZEL_REMOTE_PASSWORD }}"
       - name: Build with Bazel
         run: |
           cd lte/gateway
