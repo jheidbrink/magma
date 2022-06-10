@@ -48,10 +48,6 @@ jobs:
           sudo mkdir -p /etc/vbox/
           sudo touch /etc/vbox/networks.conf
           sudo sh -c "echo '* 192.168.0.0/16' > /etc/vbox/networks.conf"
-      - name: check if we have to cd multiple times
-        run: |
-          cd lte/gateway
-          ls
       - name: Provision the magma VM
         run: |
           cd lte/gateway
