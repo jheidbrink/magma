@@ -25,6 +25,9 @@ jobs:
     env:
       SHA: ${{ github.event.workflow_run.head_commit.id || github.sha }}
     steps:
+      - name: Print inputs
+        run: |
+          echo "Without Fabric: ${{ github.event.inputs.without_fabric }}"
       - uses: actions/checkout@v2
         with:
           ref: ${{ env.SHA }}
