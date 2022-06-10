@@ -4,6 +4,11 @@ name: LTE integ test with Bazel-built binaries
 
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
+    inputs:
+      without_fabric:
+        description: Dont even use Fabric to run the actual integ tests
+        type: boolean
+        default: false
   workflow_run:
     workflows:
       - build-all
@@ -61,10 +66,42 @@ jobs:
         run: |
           cd lte/gateway
           echo "sudo cp magma/lte/gateway/deploy/roles/magma/files/systemd_bazel/* /etc/systemd/system/ && sudo systemctl daemon-reload" | vagrant ssh magma
-      - name: Run the integ test
+      - name: Run the integ test with Fabric
+        if: github.event.inputs.without_fabric == 'false'
         run: |
           cd lte/gateway
           fab integ_test_nobuild
+      - name: Run the sudo python tests without Fabric
+        if: github.event.inputs.without_fabric == 'true'
+        run: |
+          cd lte/gateway
+          echo "cd magma/lte/gateway && make test_sudo_python" | vagrant ssh magma
+      - name: Start and provision the magma_trfserver VM
+        if: github.event.inputs.without_fabric == 'true'
+        run: |
+          cd lte/gateway
+          vagrant up magma_trfserver
+      - name: Start and provision the magma_test VM
+        if: github.event.inputs.without_fabric == 'true'
+        run: |
+          cd lte/gateway
+          vagrant up magma_test
+      - name: Build Python
+        if: github.event.inputs.without_fabric == 'true'
+        run: |
+          cd lte/gateway
+          echo "cd magma/lte/gateway/python && make" | vagrant ssh magma_test
+      - name: Build the integ tests
+        if: github.event.inputs.without_fabric == 'true'
+        run: |
+          cd lte/gateway
+          echo "cd magma/lte/gateway/python/integ_tests && make" | vagrant ssh magma_test
+      - name: Run the integ tests
+        if: github.event.inputs.without_fabric == 'true'
+        run: |
+          cd lte/gateway
+          echo "sudo ethtool --offload eth1 rx off tx off; sudo ethtool --offload eth2 rx off tx off;" | vagrant ssh magma_test
+          echo "cd magma/lte/gateway/python/integ_tests && source ~/buid/python/activate && export GATEWAY_IP=192.168.60.142 && make -i integ_test enable-flaky-retry=true" | vagrant ssh magma_test
       - name: Get test results
         if: always()
         run: |
