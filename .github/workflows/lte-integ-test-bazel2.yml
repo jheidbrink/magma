@@ -66,7 +66,7 @@ jobs:
       - name: Build with Bazel
         run: |
           cd lte/gateway
-          echo "cd magma && bazel build //lte/gateway/..." | vagrant ssh magma
+          echo "cd magma && bazel build //lte/gateway/... //orc8r/gateway/..." | vagrant ssh magma
       - name: Adapt systemd services to use Bazel-built binaries
         run: |
           cd lte/gateway
