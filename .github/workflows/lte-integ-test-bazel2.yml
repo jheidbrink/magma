@@ -50,6 +50,9 @@ jobs:
           export MAGMA_DEV_CPUS=3
           export MAGMA_DEV_MEMORY_MB=9216
           vagrant up magma
+      - name: Setup remote cache
+        run:  |
+          bazel/scripts/remote_cache_bazelrc_setup.sh vm "${{ secrets.BAZEL_REMOTE_PASSWORD }}"
       - name: Build with Bazel
         run: |
           cd lte/gateway
