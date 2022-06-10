@@ -113,6 +113,11 @@ jobs:
         run: |
           cd lte/gateway
           echo "sudo /usr/local/bin/traffic_server.py --daemon 192.168.60.144 62462 >/dev/null 2>/dev/null" | vagrant ssh magma_trfserver
+      - name: Start magma
+        if: github.event.inputs.without_fabric == 'true'
+        run: |
+          cd lte/gateway
+          echo "sudo systemctl start magma@magmad" | vagrant ssh magma
       - name: Run the integ tests
         if: github.event.inputs.without_fabric == 'true'
         run: |
