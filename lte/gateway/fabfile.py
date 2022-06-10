@@ -323,6 +323,22 @@ def integ_test(
         env.hosts = [gateway_host]
 
 
+def integ_test_nobuild():
+    """
+    Runs the integration tests.
+    Assumes that the magma dev VM is already up and that binaries are already built.
+    """
+    setup_env_vagrant()
+    execute(_run_sudo_python_unit_tests)
+    _trf_host = vagrant_setup('magma_trfserver', False)
+    execute(_start_trfserver)
+    _test_host = vagrant_setup('magma_test', False)
+
+    execute(_make_integ_tests)
+    gateway_ip = '192.168.60.142'
+    execute(_run_integ_tests, gateway_ip)
+
+
 def run_integ_tests(tests=None):
     """
     Function is required to run tests only in pre-configured Jenkins env.
