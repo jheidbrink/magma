@@ -123,7 +123,7 @@ jobs:
         run: |
           cd lte/gateway
           echo "sudo ethtool --offload eth1 rx off tx off; sudo ethtool --offload eth2 rx off tx off;" | vagrant ssh magma_test
-          echo "cd magma/lte/gateway/python/integ_tests && source ~/build/python/bin/activate && export GATEWAY_IP=192.168.60.142 && make -i integ_test enable-flaky-retry=true" | vagrant ssh magma_test
+          vagrant ssh --command "cd magma/lte/gateway/python/integ_tests && source ~/build/python/bin/activate && export GATEWAY_IP=192.168.60.142 && make -i integ_test enable-flaky-retry=true" magma_test
       - name: Get test results
         if: always()
         run: |
