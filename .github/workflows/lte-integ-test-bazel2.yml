@@ -101,6 +101,23 @@ jobs:
         run: |
           cd lte/gateway
           echo "cd magma/lte/gateway/python/integ_tests && make" | vagrant ssh magma_test
+      - name: Disable TCP checksumming everywhere
+        if: github.event.inputs.without_fabric == 'true'
+        run: |
+          cd lte/gateway
+          echo "sudo ethtool --offload eth1 rx off tx off; sudo ethtool --offload eth2 rx off tx off" | vagrant ssh magma
+          echo "sudo ethtool --offload eth1 rx off tx off; sudo ethtool --offload eth2 rx off tx off" | vagrant ssh magma_test
+          echo "sudo ethtool --offload eth1 rx off tx off; sudo ethtool --offload eth2 rx off tx off" | vagrant ssh magma_trfserver
+      #- name: Start trfserver
+      #  if: github.event.inputs.without_fabric == 'true'
+      #  run: |
+      #    cd lte/gateway
+      #    echo "nohup sudo /usr/local/bin/traffic_server.py 192.168.60.144 62462 > /dev/null 2>&1" | vagrant ssh magma_trfserver
+      - name: Start trfserver
+        if: github.event.inputs.without_fabric == 'true'
+        run: |
+          cd lte/gateway
+          fab start_trfserver
       - name: Run the integ tests
         if: github.event.inputs.without_fabric == 'true'
         run: |
