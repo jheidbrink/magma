@@ -12,7 +12,7 @@ on:  # yamllint disable-line rule:truthy
       without_fabric:
         description: Dont even use Fabric to run the actual integ tests
         type: boolean
-        default: false
+        default: true
   workflow_run:
     workflows:
       - build-all
@@ -23,6 +23,7 @@ on:  # yamllint disable-line rule:truthy
       - completed
 
 permissions:
+  checks: write  # required for the "Upload test results" step
   id-token: write  # required for OIDC auth to AWS
 
 jobs:
@@ -41,7 +42,7 @@ jobs:
           ref: ${{ env.SHA }}
       - name: Install pre requisites
         run: |
-          pip3 install ansible
+          brew install ansible
           vagrant plugin install vagrant-vbguest vagrant-disksize
       - name: Assume artifacts upload role so we can download the basebox
         uses: aws-actions/configure-aws-credentials@v1
@@ -72,6 +73,42 @@ jobs:
             aws s3api put-object-acl --bucket org.janheidbrink.magma-artifacts --key magma-dev-basebox.box --acl public-read
             echo "Basebox uploaded to S3"
           fi
+      - name: Download and add the magma-test VM basebox
+        run: |
+          if curl --head --fail http://org.janheidbrink.magma-artifacts.s3-website.us-east-1.amazonaws.com/magma-test-basebox.box
+          then
+            echo "magma-test basebox artifact exists on S3, downloading"
+            aws s3 cp --no-progress s3://org.janheidbrink.magma-artifacts/magma-test-basebox.box ./
+            vagrant box add --name=magma_test ./magma-test-basebox.box
+            rm ./magma-test-basebox.box
+          else
+            echo "magma-test basebox artifact doesn't exist on S3, downloading from Vagrant Cloud"
+            curl --location --fail https://app.vagrantup.com/magmacore/boxes/magma_test/versions/1.1.20220608/providers/virtualbox.box -o magma-test-basebox.box
+            vagrant box add --name=magma_test ./magma-test-basebox.box
+            echo "Uploading basebox to S3 to avoid running into Vagrant Cloud rate limit"
+            aws s3 cp --no-progress ./magma-test-basebox.box s3://org.janheidbrink.magma-artifacts/magma-test-basebox.box
+            rm magma-test-basebox.box
+            aws s3api put-object-acl --bucket org.janheidbrink.magma-artifacts --key magma-test-basebox.box --acl public-read
+            echo "Basebox uploaded to S3"
+          fi
+      - name: Download and add the magma-trfserver VM basebox
+        run: |
+          if curl --head --fail http://org.janheidbrink.magma-artifacts.s3-website.us-east-1.amazonaws.com/magma-trfserver-basebox.box
+          then
+            echo "magma-trfserver basebox artifact exists on S3, downloading"
+            aws s3 cp --no-progress s3://org.janheidbrink.magma-artifacts/magma-trfserver-basebox.box ./
+            vagrant box add --name=magma_trfserver ./magma-trfserver-basebox.box
+            rm ./magma-trfserver-basebox.box
+          else
+            echo "magma-trfserver basebox artifact doesn't exist on S3, downloading from Vagrant Cloud"
+            curl --location --fail https://app.vagrantup.com/magmacore/boxes/magma_trfserver/versions/1.1.20210326/providers/virtualbox.box -o magma-trfserver-basebox.box
+            vagrant box add --name=magma_trfserver ./magma-trfserver-basebox.box
+            echo "Uploading basebox to S3 to avoid running into Vagrant Cloud rate limit"
+            aws s3 cp --no-progress ./magma-trfserver-basebox.box s3://org.janheidbrink.magma-artifacts/magma-trfserver-basebox.box
+            rm magma-trfserver-basebox.box
+            aws s3api put-object-acl --bucket org.janheidbrink.magma-artifacts --key magma-trfserver-basebox.box --acl public-read
+            echo "Basebox uploaded to S3"
+          fi
       - name: Provision the magma VM
         run: |
           cd lte/gateway
@@ -90,16 +127,27 @@ jobs:
         run: |
           cd lte/gateway
           echo "sudo cp magma/lte/gateway/deploy/roles/magma/files/systemd_bazel/* /etc/systemd/system/ && sudo systemctl daemon-reload" | vagrant ssh magma
+      - name: Create the Python environment
+        # While the services start binaries built with Bazel, some helpers like service_util.py
+        # or generate_service_config.py require the Python environment built with make
+        if: github.event.inputs.without_fabric == 'true'
+        run: |
+          cd lte/gateway
+          echo "cd magma/lte/gateway/python && make buildenv" | vagrant ssh magma
+      - name: Start magma
+        if: github.event.inputs.without_fabric == 'true'
+        run: |
+          cd lte/gateway
+          echo "sudo systemctl start magma@magmad" | vagrant ssh magma
+          echo "Sleeping 10 seconds waiting for magma to start"
+          sleep 10
+          echo "Getting logs so we can verify that magma actually started"
+          echo "sudo journalctl --since=today" | vagrant ssh magma
       - name: Run the integ test with Fabric
         if: github.event.inputs.without_fabric == 'false'
         run: |
           cd lte/gateway
           fab integ_test_nobuild
-      - name: Run the sudo python tests without Fabric
-        if: github.event.inputs.without_fabric == 'true'
-        run: |
-          cd lte/gateway
-          echo "cd magma/lte/gateway && make test_sudo_python" | vagrant ssh magma
       - name: Start and provision the magma_trfserver VM
         if: github.event.inputs.without_fabric == 'true'
         run: |
@@ -131,29 +179,30 @@ jobs:
         if: github.event.inputs.without_fabric == 'true'
         run: |
           cd lte/gateway
-          echo "sudo /usr/local/bin/traffic_server.py --daemon 192.168.60.144 62462 >/dev/null 2>/dev/null" | vagrant ssh magma_trfserver
-      - name: Start magma
-        if: github.event.inputs.without_fabric == 'true'
-        run: |
-          cd lte/gateway
-          echo "sudo systemctl start magma@magmad" | vagrant ssh magma
-          echo "Sleeping 10 seconds waiting for magma to start"
-          sleep 10
-          echo "Getting logs so we can verify that magma actually started"
-          echo "sudo journalctl --since=today"
+          # even with the --daemon flag, the traffic server seems to keep stdout and stderr open,
+          # so we need to redirect it to /dev/null so that the command exits.
+          echo "sudo /usr/local/bin/traffic_server.py --daemon 192.168.60.144 62462 >trfserver_stdout 2>trfserver_stderr" | vagrant ssh magma_trfserver
       - name: Run the integ tests
         if: github.event.inputs.without_fabric == 'true'
         run: |
           cd lte/gateway
-          echo "sudo ethtool --offload eth1 rx off tx off; sudo ethtool --offload eth2 rx off tx off;" | vagrant ssh magma_test
-          vagrant ssh --command "cd magma/lte/gateway/python/integ_tests && source ~/build/python/bin/activate && export GATEWAY_IP=192.168.60.142 && make -i integ_test enable-flaky-retry=true" magma_test
+          # The following ssh command needs to force tty allocation via the -tt flag, otherwise we get "SInit(): Could not initialize the Logging streams"
+          vagrant ssh --command "cd magma/lte/gateway/python/integ_tests && source ~/build/python/bin/activate && export GATEWAY_IP=192.168.60.142 && make -i integ_test enable-flaky-retry=true" magma_test -- -ttt
       - name: Get test results
         if: always()
         run: |
           cd lte/gateway
-          vagrant ssh magma --command "cd /var/tmp/ && tar --create test_results" | tar --extract
-          vagrant ssh magma_test --command "cd /var/tmp/ && tar --create test_results" | tar --extract --strip-components=1
-          ls -R
+          # For some reason calling tar with "vagrant ssh" messes up the result.
+          # Add machines to SSH config so we can SSH without Vagrant
+          mkdir -p ~/.ssh/
+          touch ~/.ssh/config
+          vagrant ssh-config magma >> ~/.ssh/config
+          vagrant ssh-config magma_test >> ~/.ssh/config
+          vagrant ssh-config magma_trfserver >> ~/.ssh/config
+          ssh magma "cd /var/tmp/ && tar --create test_results" | tar --extract
+          ssh magma_test "cd /var/tmp/ && tar --create test_results" | tar --extract --strip-components=1
+          mv test_results test-results
+          ls -R test-results
       - name: Upload test results
         uses: actions/upload-artifact@v2
         if: always()
@@ -161,22 +210,23 @@ jobs:
           name: test-results
           path: lte/gateway/test-results/**/*.xml
       - name: Get test logs
-        if: failure()
+        if: always()
         run: |
           cd lte/gateway
-          mkdir -p /tmp/build_logs/{dev,test,trfserver}
-          echo "sudo tar --create /var/log"              | vagrant ssh magma           | { cd /tmp/build_logs/dev       && tar --extract; }
-          echo "sudo chmod a+rx /tmp/fw"                 | vagrant ssh magma_test
-          echo "sudo tar --create /var/log"              | vagrant ssh magma_test      | { cd /tmp/build_logs/test      && tar --extract; }
-          echo "sudo tar --create /tmp/fw"               | vagrant ssh magma_test      | { cd /tmp/build_logs/test      && tar --extract; }
-          echo "sudo tar --create /home/admin/nouhp.out" | vagrant ssh magma_trfserver | { cd /tmp/build_logs/trfserver && tar --extract; }
-          tar -czvf /tmp/build_logs.tar.gz /tmp/build_logs/*
+          mkdir -p logs/{dev,test,trfserver}
+          ssh magma "sudo tar --create /var/log"      | tar --extract --directory=logs/dev --strip-components=2
+          ssh magma_test "sudo chmod a+rx /tmp/fw"
+          ssh magma_test "sudo tar --create /var/log" | tar --extract --directory=logs/test --strip-components=2
+          ssh magma_test "sudo tar --create /tmp/fw"  | tar --extract --directory=logs/test --strip-components=1
+          ssh magma_trfserver "cat trfserver_stdout"  | cat > logs/trfserver/trfserver_stdout
+          ssh magma_trfserver "cat trfserver_stderr"  | cat > logs/trfserver/trfserver_stderr
+          tar --create --gzip --file logs.tar.gz logs/*
       - name: Upload test logs
         uses: actions/upload-artifact@v2
-        if: failure()
+        if: always()
         with:
           name: test-logs
-          path: /tmp/build_logs.tar.gz
+          path: logs.tar.gz
       - name: Publish Unit Test Results
         if: always()
         uses: EnricoMi/publish-unit-test-result-action/composite@v1
@@ -187,7 +237,7 @@ jobs:
         if: always() && github.event.workflow_run.event == 'push'
         env:
           FIREBASE_SERVICE_CONFIG: ${{ secrets.FIREBASE_SERVICE_CONFIG }}
-          REPORT_FILENAME: "lte_integ_test_${{ env.SHA }}.html"
+          REPORT_FILENAME: "lte_integ_test_bazel_${{ env.SHA }}.html"
         run: |
           npm install -g xunit-viewer
           [ -d "lte/gateway/test-results/" ] && { xunit-viewer -r lte/gateway/test-results/ -o "$REPORT_FILENAME"; }
