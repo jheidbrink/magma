@@ -1,0 +1,77 @@
+name: 'Ensure available EC2 instance for reverse shell'
+description: 'Ensure we have an available EC2 instance for reverse shells'
+inputs:
+  iam_role:
+    type: string
+    description: 'The IAM role to assume to query/start EC2 instances'
+  ip:
+    type: string
+    description: 'The IP to connect to'
+outputs:
+  ip:
+    description: "IP address of EC2 instance"
+    value: ${{ steps.find_ip.outputs.ip }}
+runs:
+  using: "composite"
+  steps:
+    - run: echo Hello ${{ inputs.who-to-greet }}.
+      shell: bash
+    - run: echo "${{ github.action_path }}" >> $GITHUB_PATH
+      shell: bash          
+    - name: Validate parameters
+      run: |
+        if [[ -z "${{ inputs.ip }}" ]] && [[ -z "${{ inputs.iam_role }}" ]]
+        then
+          echo "Need to specify IP or iam_role"
+        fi
+        if [[ -n "${{ inputs.ip }}" ]] && [[ -n "${{ inputs.iam_role }}" ]]
+        then
+          echo "Need to specify IP or iam_role, not both"
+        fi
+      shell: bash
+    - name: configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: ${{ inputs.iam_role }}
+        role-session-name: "reverseshell"
+        aws-region: us-east-1
+      if: ${{ inputs.iam_role }} != ""
+    - name: Find or launch instance and persist IP
+      id: find_ip
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.ip }}" ]
+        then
+          echo "::set-output name=ip::${{ inputs.ip }}"
+          exit 0
+        fi
+
+        echo "Finding a free instance"
+        aws ec2 describe-instances > instances.json
+        ip=$(jq --raw-output '[.Reservations[] | .Instances[] | select(.PublicIpAddress != null)] | .[0].PublicIpAddress' < instances.json)
+        if [ "$ip" != null ]
+        then
+          echo "::set-output name=ip::$ip"
+          exit 0
+        fi
+
+        echo "No instance found, launching instance"
+        aws ec2 run-instances > reverse-shell-instance.json \
+          --count 1 \
+          --key-name reverse-shell \
+          --launch-template LaunchTemplateName=reverse-shell
+        instance_id=$(jq --raw-output '.Instances[0].InstanceId' < reverse-shell-instance.json)
+        instance_state=$(jq --raw-output '.Instances[0].State.Name' < reverse-shell-instance.json)
+
+        echo "Waiting for Instance ${instance_id} to be ready"
+        while [ "${instance_state}" != "running" ]
+        do
+          echo -n "."
+          sleep 5
+          instance_state=$(aws ec2 describe-instances --instance-ids ${instance_id} | jq --raw-output '.Reservations[0].Instances[0].State.Name')
+        done
+        echo "Instance ${instance_id} is ${instance_state}"
+
+        ip=$(aws ec2 describe-instances --instance-id ${instance_id} | jq --raw-output '.Reservations[0].Instances[0].PublicIpAddress')
+
+        echo "::set-output name=ip::$ip"

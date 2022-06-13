@@ -1,0 +1,86 @@
+name: 'Reverse Shell with socat'
+description: 'Start a reverse shell for better workflow debugging with socat'
+inputs:
+  iam_role:
+    type: string
+    description: 'The IAM role to assume to query/start EC2 instances'
+  ip:
+    type: string
+    description: 'The IP to connect to'
+  middleman_private_key:
+    type: string
+    description: 'The private SSH key that allows us to connect to the EC2 instance'
+    required: true
+  middleman_host_rsa_key:
+    type: string
+    description: ''
+    required: true
+  middleman_host_ed25519_key:
+    type: string
+    description: ''
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - run: echo Hello ${{ inputs.who-to-greet }}.
+      shell: bash
+    - run: echo "${{ github.action_path }}" >> $GITHUB_PATH
+      shell: bash          
+    - name: Validate parameters
+      run: |
+        if [[ -z "${{ inputs.ip }}" ]] && [[ -z "${{ inputs.iam_role }}" ]]
+        then
+          echo "Need to specify IP or iam_role"
+        fi
+        if [[ -n "${{ inputs.ip }}" ]] && [[ -n "${{ inputs.iam_role }}" ]]
+        then
+          echo "Need to specify IP or iam_role, not both"
+        fi
+      shell: bash
+    - name: find free ip
+      id: find_ip
+      uses: ./.github/workflows/composite/free_ec2_instance
+      with:
+        iam_role: ${{ inputs.iam_role }}
+        ip: ${{ inputs.ip }}
+    - name: run a reverse shell
+      shell: bash
+      run: |
+        set -x
+
+        export ip=${{ steps.find_ip.outputs.ip }}
+
+        echo "preparing SSH keys"
+        mkdir -p ~./ssh
+        chmod go-rwx ~/.ssh
+        echo "${{ inputs.middleman_private_key }}" > ~/.ssh/reverse_shell_middleman.pem
+        chmod go-rwx ~/.ssh/reverse_shell_middleman.pem
+        touch ~/.ssh/known_hosts
+        chmod go-rwx ~/.ssh/known_hosts
+        echo "${ip} ${{ inputs.middleman_host_rsa_key }}" >> ~/.ssh/known_hosts
+        echo "${ip} ${{ inputs.middleman_host_ed25519_key }}" >> ~/.ssh/known_hosts
+
+        echo "Waiting for SSH server"
+        until nc -w 0 ${ip} 22
+        do
+          echo -n "."
+          sleep 3
+        done
+        echo ""
+        echo "After SSH server is up, we need to wait a bit more for the machine to update the host keys (in machines userdata)."
+        sleep 5
+
+        echo "Running interactive bash and redirecting to unix domain socket on EC2 instance"
+        # inspired by https://blog.ropnop.com/upgrading-simple-shells-to-fully-interactive-ttys/
+        brew install socat
+        workflow=$(echo ${{ github.workflow }} | tr ' ' '_')
+        echo $workflow
+        echo "Fowarding bash with socat in the background"
+        socat exec:'bash -li',pty,stderr,setsid,sigint,sane exec:"ssh -i ~/.ssh/reverse_shell_middleman.pem ubuntu@${ip} 'socat - unix-listen:shell-${{ github.job }}-${{ github.run_number }}.socket'" &
+
+    - name: Print reverse shell connection instructions
+      shell: bash
+      run: |
+        echo "Connect to the ec2 instance with the following command:"
+        echo ssh -t ubuntu@${{ steps.find_ip.outputs.ip }} \'tmux new-session -s reverse-shell-${{ github.job }}-${{ github.run_number }} \\\; send-keys \"socat - unix-connect:shell-${{ github.job }}-${{ github.run_number }}.socket\" C-m\'
+        echo "Consider opening a screen session inside the runner: TERM=xterm screen"
