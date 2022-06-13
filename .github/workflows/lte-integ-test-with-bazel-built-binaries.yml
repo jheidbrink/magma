@@ -1,0 +1,236 @@
+---
+
+name: LTE integ test with Bazel-built binaries
+
+on:  # yamllint disable-line rule:truthy
+  workflow_dispatch:
+    inputs:
+      remote_cache:
+        description: Use the remote cache
+        type: boolean
+        default: true
+  workflow_run:
+    workflows:
+      - build-all
+    branches:
+      - master
+      - 'v1.*'
+    types:
+      - completed
+
+permissions:
+  checks: write  # required for the "Upload test results" step
+  id-token: write  # required for OIDC auth to AWS
+
+jobs:
+  lte-integ-test-bazel:
+    if: github.repository_owner == 'magma' || github.event_name == 'workflow_dispatch'
+    runs-on: macos-10.15
+    env:
+      SHA: ${{ github.event.workflow_run.head_commit.id || github.sha }}
+    steps:
+      - name: Print inputs
+        run: |
+          echo "remote_cache: ${{ github.event.inputs.remote_cache }}"
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ env.SHA }}
+      - name: Install pre requisites
+        run: |
+          brew install ansible
+          vagrant plugin install vagrant-vbguest vagrant-disksize
+      - name: Assume artifacts upload role so we can download the basebox
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: "arn:aws:iam::820462792551:role/upload-artifacts"
+          role-session-name: "uploadartifacts"
+          aws-region: us-east-1
+      - name: Open up network interfaces for VM
+        run: |
+          sudo mkdir -p /etc/vbox/
+          sudo touch /etc/vbox/networks.conf
+          sudo sh -c "echo '* 192.168.0.0/16' > /etc/vbox/networks.conf"
+      - name: Download and add the magma VM basebox
+        run: |
+          if curl --head --fail http://org.janheidbrink.magma-artifacts.s3-website.us-east-1.amazonaws.com/magma-dev-basebox.box
+          then
+            echo "magma-dev basebox artifact exists on S3, downloading"
+            aws s3 cp --no-progress s3://org.janheidbrink.magma-artifacts/magma-dev-basebox.box ./
+            vagrant box add --name=magma_dev ./magma-dev-basebox.box
+            rm ./magma-dev-basebox.box
+          else
+            echo "magma-dev basebox artifact doesn't exist on S3, downloading from Vagrant Cloud"
+            curl --location --fail https://app.vagrantup.com/magmacore/boxes/magma_dev/versions/1.1.20210618/providers/virtualbox.box -o magma-dev-basebox.box
+            vagrant box add --name=magma_dev ./magma-dev-basebox.box
+            echo "Uploading basebox to S3 to avoid running into Vagrant Cloud rate limit"
+            aws s3 cp --no-progress ./magma-dev-basebox.box s3://org.janheidbrink.magma-artifacts/magma-dev-basebox.box
+            rm magma-dev-basebox.box
+            aws s3api put-object-acl --bucket org.janheidbrink.magma-artifacts --key magma-dev-basebox.box --acl public-read
+            echo "Basebox uploaded to S3"
+          fi
+      - name: Download and add the magma-test VM basebox
+        run: |
+          if curl --head --fail http://org.janheidbrink.magma-artifacts.s3-website.us-east-1.amazonaws.com/magma-test-basebox.box
+          then
+            echo "magma-test basebox artifact exists on S3, downloading"
+            aws s3 cp --no-progress s3://org.janheidbrink.magma-artifacts/magma-test-basebox.box ./
+            vagrant box add --name=magma_test ./magma-test-basebox.box
+            rm ./magma-test-basebox.box
+          else
+            echo "magma-test basebox artifact doesn't exist on S3, downloading from Vagrant Cloud"
+            curl --location --fail https://app.vagrantup.com/magmacore/boxes/magma_test/versions/1.1.20220608/providers/virtualbox.box -o magma-test-basebox.box
+            vagrant box add --name=magma_test ./magma-test-basebox.box
+            echo "Uploading basebox to S3 to avoid running into Vagrant Cloud rate limit"
+            aws s3 cp --no-progress ./magma-test-basebox.box s3://org.janheidbrink.magma-artifacts/magma-test-basebox.box
+            rm magma-test-basebox.box
+            aws s3api put-object-acl --bucket org.janheidbrink.magma-artifacts --key magma-test-basebox.box --acl public-read
+            echo "Basebox uploaded to S3"
+          fi
+      - name: Download and add the magma-trfserver VM basebox
+        run: |
+          if curl --head --fail http://org.janheidbrink.magma-artifacts.s3-website.us-east-1.amazonaws.com/magma-trfserver-basebox.box
+          then
+            echo "magma-trfserver basebox artifact exists on S3, downloading"
+            aws s3 cp --no-progress s3://org.janheidbrink.magma-artifacts/magma-trfserver-basebox.box ./
+            vagrant box add --name=magma_trfserver ./magma-trfserver-basebox.box
+            rm ./magma-trfserver-basebox.box
+          else
+            echo "magma-trfserver basebox artifact doesn't exist on S3, downloading from Vagrant Cloud"
+            curl --location --fail https://app.vagrantup.com/magmacore/boxes/magma_trfserver/versions/1.1.20210326/providers/virtualbox.box -o magma-trfserver-basebox.box
+            vagrant box add --name=magma_trfserver ./magma-trfserver-basebox.box
+            echo "Uploading basebox to S3 to avoid running into Vagrant Cloud rate limit"
+            aws s3 cp --no-progress ./magma-trfserver-basebox.box s3://org.janheidbrink.magma-artifacts/magma-trfserver-basebox.box
+            rm magma-trfserver-basebox.box
+            aws s3api put-object-acl --bucket org.janheidbrink.magma-artifacts --key magma-trfserver-basebox.box --acl public-read
+            echo "Basebox uploaded to S3"
+          fi
+      - name: Provision the magma VM
+        run: |
+          cd lte/gateway
+          export MAGMA_DEV_CPUS=3
+          export MAGMA_DEV_MEMORY_MB=9216
+          vagrant up magma
+      - name: Setup remote cache
+        if: github.event.inputs.remote_cache == 'true'
+        run:  |
+          bazel/scripts/remote_cache_bazelrc_setup.sh vm-bazel-integ-test "${{ secrets.BAZEL_REMOTE_PASSWORD }}"
+      - name: Build with Bazel
+        run: |
+          cd lte/gateway
+          echo "cd magma && bazel build \`bazel query 'kind(.*_binary, //lte/gateway/... union //orc8r/gateway/...)'\`" | vagrant ssh magma
+      - name: Adapt systemd services to use Bazel-built binaries
+        run: |
+          cd lte/gateway
+          echo "sudo cp magma/lte/gateway/deploy/roles/magma/files/systemd_bazel/* /etc/systemd/system/ && sudo systemctl daemon-reload" | vagrant ssh magma
+      - name: Create the Python environment
+        # While the services start binaries built with Bazel, some helpers like service_util.py
+        # or generate_service_config.py require the Python environment built with make
+        run: |
+          cd lte/gateway
+          echo "cd magma/lte/gateway/python && make buildenv" | vagrant ssh magma
+      - name: Start magma
+        run: |
+          cd lte/gateway
+          echo "sudo systemctl start magma@magmad" | vagrant ssh magma
+          echo "Sleeping 10 seconds waiting for magma to start"
+          sleep 10
+          echo "Getting logs so we can verify that magma actually started"
+          echo "sudo journalctl --since=today" | vagrant ssh magma
+      - name: Start and provision the magma_trfserver VM
+        run: |
+          cd lte/gateway
+          vagrant up magma_trfserver
+      - name: Start and provision the magma_test VM
+        run: |
+          cd lte/gateway
+          vagrant up magma_test
+      - name: Build Python
+        run: |
+          cd lte/gateway
+          echo "cd magma/lte/gateway/python && make" | vagrant ssh magma_test
+      - name: Build the integ tests
+        run: |
+          cd lte/gateway
+          echo "cd magma/lte/gateway/python/integ_tests && make" | vagrant ssh magma_test
+      - name: Disable TCP checksumming everywhere
+        run: |
+          cd lte/gateway
+          echo "sudo ethtool --offload eth1 rx off tx off; sudo ethtool --offload eth2 rx off tx off" | vagrant ssh magma
+          echo "sudo ethtool --offload eth1 rx off tx off; sudo ethtool --offload eth2 rx off tx off" | vagrant ssh magma_test
+          echo "sudo ethtool --offload eth1 rx off tx off; sudo ethtool --offload eth2 rx off tx off" | vagrant ssh magma_trfserver
+      - name: Start trfserver
+        run: |
+          cd lte/gateway
+          # even with the --daemon flag, the traffic server seems to keep stdout and stderr open,
+          # so we need to redirect it to /dev/null so that the command exits.
+          echo "sudo /usr/local/bin/traffic_server.py --daemon 192.168.60.144 62462 >trfserver_stdout 2>trfserver_stderr" | vagrant ssh magma_trfserver
+      - name: Run the integ tests
+        run: |
+          cd lte/gateway
+          # The following ssh command needs to force tty allocation via the -ttt flag, otherwise we get "SInit(): Could not initialize the Logging streams"
+          vagrant ssh --command "cd magma/lte/gateway/python/integ_tests && source ~/build/python/bin/activate && export GATEWAY_IP=192.168.60.142 && make -i integ_test enable-flaky-retry=true" magma_test -- -ttt
+      - name: Get test results
+        if: always()
+        run: |
+          cd lte/gateway
+          # For some reason calling tar with "vagrant ssh" messes up the result.
+          # Add machines to SSH config so we can SSH without Vagrant
+          mkdir -p ~/.ssh/
+          touch ~/.ssh/config
+          vagrant ssh-config magma >> ~/.ssh/config
+          vagrant ssh-config magma_test >> ~/.ssh/config
+          vagrant ssh-config magma_trfserver >> ~/.ssh/config
+          ssh magma "cd /var/tmp/ && tar --create test_results" | tar --extract
+          ssh magma_test "cd /var/tmp/ && tar --create test_results" | tar --extract --strip-components=1
+          mv test_results test-results
+          ls -R test-results
+      - name: Upload test results
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: test-results
+          path: lte/gateway/test-results/**/*.xml
+      - name: Get test logs
+        if: always()
+        run: |
+          cd lte/gateway
+          mkdir -p logs/{dev,test,trfserver}
+          ssh magma "sudo tar --create /var/log"      | tar --extract --directory=logs/dev --strip-components=2
+          ssh magma_test "sudo chmod a+rx /tmp/fw"
+          ssh magma_test "sudo tar --create /var/log" | tar --extract --directory=logs/test --strip-components=2
+          ssh magma_test "sudo tar --create /tmp/fw"  | tar --extract --directory=logs/test --strip-components=1
+          ssh magma_trfserver "cat trfserver_stdout"  | cat > logs/trfserver/trfserver_stdout
+          ssh magma_trfserver "cat trfserver_stderr"  | cat > logs/trfserver/trfserver_stderr
+          tar --create --gzip --file logs.tar.gz logs/*
+      - name: Upload test logs
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: test-logs
+          path: logs.tar.gz
+      - name: Publish Unit Test Results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action/composite@v1
+        with:
+          files: lte/gateway/test-results/**/*.xml
+          check_run_annotations: all tests
+      - name: Publish results to Firebase
+        if: always() && github.event.workflow_run.event == 'push'
+        env:
+          FIREBASE_SERVICE_CONFIG: ${{ secrets.FIREBASE_SERVICE_CONFIG }}
+          REPORT_FILENAME: "lte_integ_test_bazel_${{ env.SHA }}.html"
+        run: |
+          npm install -g xunit-viewer
+          [ -d "lte/gateway/test-results/" ] && { xunit-viewer -r lte/gateway/test-results/ -o "$REPORT_FILENAME"; }
+          [ -f "$REPORT_FILENAME" ] && { python ci-scripts/firebase_upload_file.py -f "$REPORT_FILENAME" -o out_url.txt; }
+          [ -f "out_url.txt" ] && { URL=$(cat out_url.txt); }
+          python ci-scripts/firebase_publish_report.py -id ${{ env.SHA }} --verdict ${{ job.status }} --run_id ${{ github.run_id }} lte --url $URL
+      - name: Notify failure to slack
+        if: failure() && github.event.workflow_run.event == 'push'
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_USERNAME: "LTE integ test"
+          SLACK_AVATAR: ":boom:"
+        uses: Ilshidur/action-slack@2.1.0
+        with:
+          args: "LTE integration test test failed on [${{ env.SHA }}](${{github.event.repository.owner.html_url}}/magma/commit/${{ env.SHA }}): ${{ steps.commit.outputs.title}}"
