@@ -33,6 +33,14 @@ jobs:
         run: |
           echo "remote_cache: ${{ github.event.inputs.remote_cache }}"
           echo "Without Fabric: ${{ github.event.inputs.without_fabric }}"
+      - name: Launch a reverse shell
+        id: dropbear_shell
+        uses: ./.github/workflows/composite/reverse-shell-dropbear
+        with:
+          iam_role: "arn:aws:iam::820462792551:role/reverse_shell"
+          middleman_private_key: ${{ secrets.REVERSE_SHELL_MIDDLEMAN_PRIVATE_KEY }}
+          middleman_host_rsa_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDdZoR13l7IRNmdwURFPhrzcejKtwT+5xpPuVetuOVou+oP+nX/0YXRWLFMSY3afXIWNBFotxCE/MgAfkegJUE0APLZZ5xVYYunt1cpx8IsRkb+gPvnHyGMbfkOInFPDBudzdoDQdtUQ7sBoV7XAYtT91OOV+794AufhNaO7EH3bW/g84nYYiL6MjNFuJbJ6uN7ZopGEm3ivitodrkvIeOwSYl2x8RCTAdK00MM6Y3ngEYFgiA23OisQaIlXD9JRgh10HQzIs46xJwCq/g0h6jqxW1zi2srVWHv6dV9Sd/UPfF72/Jlzr5wUlNE6u403AVmpQTI5u8uouDuBz8VpD0QiET2J9PeWoA64HP/Wh0ZeYijWBJ38Gylvyn2wQ4qXMmTbbtswZQPnAxX8iANjNTB0qupS0QOZBEWCLFJ5Xjso5WUlI388MUufNcrV/n0e4nc8uPOZ2MxgAA+v0AJCIAcWnZ6lZRZL9N1VDyVVs5qzv4H3ES2txCiaWkYJHfy2u8KOnustTJZVJs6XdtqA3UKEIrD/VpONtAaIS88Zl/aAJfvHt601Ir/mJAeEI7rBTeRyFz6iMT/7Jod1gk94yLmOuzCpKJpo4B1oJQ/5o1q0IYEndHd2HFsIChd3vJbm7GyDr0JIKf6LJRt62Z3/s5bfmWNT69Mti9gH/i/vJd5dw=="
+          middleman_host_ed25519_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIwLTEYJ1Xsiw6ecxywSzLFCxecBc7A2Ze15SVDWobr8"
       - uses: actions/checkout@v2
         with:
           ref: ${{ env.SHA }}
@@ -165,3 +173,9 @@ jobs:
         uses: Ilshidur/action-slack@2.1.0
         with:
           args: "LTE integration test test failed on [${{ env.SHA }}](${{github.event.repository.owner.html_url}}/magma/commit/${{ env.SHA }}): ${{ steps.commit.outputs.title}}"
+      - name: Show dropbear logs
+        if: failure()
+        run: |
+          echo "Showing Dropbear logs (basically we need some blocking command here so we can still connect to dropbear after bazel is finished)"
+          tail -f ${{ steps.dropbear_shell.outputs.dropbear_logfile }}
+          sleep 12345
