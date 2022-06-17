@@ -1,0 +1,19 @@
+name: Test Upterm
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        type: choice
+        options:
+          - ubuntu-latest
+          - macos-10.15
+jobs:
+  test-upterm:
+    runs-on: ${{ inputs.runner }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup upterm session
+      uses: lhotari/action-upterm@v1
+      with:
+        ## limits ssh access and adds the ssh public key for the user which triggered the workflow
+        limit-access-to-actor: true
