@@ -123,6 +123,33 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
   end
 
+  config.vm.define :lte_agwc, autostart: false do |lte_agwc|
+    lte_agwc.vm.box = "magma_dev"
+    lte_agwc.vm.hostname = "lte-agwc"
+    lte_agwc.vm.network "private_network", ip: "192.168.60.155", nic_type: "82540EM"
+    # UE trfgen network
+    lte_agwc.vm.network "private_network", ip: "192.168.128.12", nic_type: "82540EM"
+    lte_agwc.vbguest.auto_update = false
+
+    lte_agwc.vm.provider "virtualbox" do |vb|
+      vb.name = "lte_agwc"
+      vb.linked_clone = true
+      vb.customize ["modifyvm", :id, "--memory", ENV.fetch("LTE_AGWC_MEMORY_MB", "8192")]
+      vb.customize ["modifyvm", :id, "--cpus", ENV.fetch("LTE_AGWC_CPUS", "4")]
+      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+      vb.customize ["guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold", 1000 ]
+    end
+    lte_agwc.vm.provision "ansible" do |ansible|
+      ansible.host_key_checking = false
+      ansible.playbook = "deploy/magma_docker.yml"
+      ansible.inventory_path = "deploy/hosts"
+      ansible.raw_arguments = ENV.fetch("ANSIBLE_ARGS", "").split(";") +
+                              ["--timeout=30"]
+      ansible.verbose = 'v'
+    end
+  end
+
+
   config.vm.define :magma_test, autostart: false do |magma_test|
     magma_test.vm.box = "magmacore/magma_test"
     magma_test.vm.box_version = "1.2.20221012"
