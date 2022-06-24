@@ -150,6 +150,28 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
   end
 
+  config.vm.define :lte_agwc2, autostart: false do |lte_agwc|
+    lte_agwc.vm.box = "ubuntu/focal64"
+    lte_agwc.vm.hostname = "lte-agwc2"
+    lte_agwc.vm.network "private_network", ip: "192.168.60.157", nic_type: "82540EM"
+    # UE trfgen network
+    lte_agwc.vm.network "private_network", ip: "192.168.128.39", nic_type: "82540EM"
+    lte_agwc.vbguest.auto_update = false
+
+    lte_agwc.vm.provider "virtualbox" do |vb|
+      vb.name = "lte_agwc2"
+      vb.linked_clone = true
+      vb.customize ["modifyvm", :id, "--memory", ENV.fetch("lte_agwc_MEMORY_MB", "8192")]
+      vb.customize ["modifyvm", :id, "--cpus", ENV.fetch("lte_agwc_CPUS", "4")]
+      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+      vb.customize ["guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold", 1000 ]
+    end
+    lte_agwc.vm.provision "shell", inline: "sudo mkdir -p /var/opt/magma/certs && sudo cp magma/.cache/test_certs/rootCA.pem /var/opt/magma/certs/rootCA.pem"
+    lte_agwc.vm.provision "shell" do |sh|
+      sh.path = "deploy/agw_install_docker.sh"
+    end
+  end
+
 
   config.vm.define :magma_test, autostart: false do |magma_test|
     magma_test.vm.box = "magmacore/magma_test"
