@@ -141,7 +141,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
     lte_agwc.vm.provision "ansible" do |ansible|
       ansible.host_key_checking = false
-      ansible.playbook = "deploy/magma_docker.yml"
+      #ansible.playbook = "deploy/magma_docker.yml"
+      ansible.playbook = "deploy/magma_dev_focal.yml"
       ansible.inventory_path = "deploy/hosts"
       ansible.raw_arguments = ENV.fetch("ANSIBLE_ARGS", "").split(";") +
                               ["--timeout=30"]
