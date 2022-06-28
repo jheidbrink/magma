@@ -69,6 +69,18 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
   end
 
+  config.vm.define :ubuntu do |ubuntu|
+    ubuntu.vm.box = "ubuntu/focal64"
+    ubuntu.vm.box_version = "20220627.1.0"
+    ubuntu.vbguest.auto_update = false
+    ubuntu.vm.provider "virtualbox" do |vb|
+      vb.name = "ubuntu"
+      vb.linked_clone = true
+      vb.customize ["modifyvm", :id, "--memory", ENV.fetch("MAGMA_DEV_MEMORY_MB", "12000")]
+      vb.customize ["modifyvm", :id, "--cpus", ENV.fetch("MAGMA_DEV_CPUS", "5")]
+    end
+  end
+
   config.vm.define :magma_trfserver, autostart: false do |magma_trfserver|
     magma_trfserver.vm.box = "magmacore/magma_trfserver"
     magma_trfserver.vm.box_version = "1.1.20220722"
