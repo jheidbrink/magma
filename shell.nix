@@ -9,10 +9,11 @@ in
 (pkgs.buildFHSUserEnv {
   name = "magma";
   targetPkgs = pkgs: [
+    # Required for Bazel build
     bazel
     pkgs.systemd.dev  # found via `nix-locate sd-daemon.h`, required for build Python wheel systemd
     pkgs.gcc
-    pkgs.python38
+    pkgs.python310
     pkgs.git
     pkgs.cacert
     pkgs.zlib  # required by jdk
@@ -23,5 +24,8 @@ in
     pkgs.binutils  # for readelf
     pkgs.cmake  # for cc_binary targets
     pkgs.folly  # C++ library (still) used by Magma
+
+    # not necessarily required for bazel build, but I want to have those in magma context
+    pkgs.python310Packages.pytest
   ];
 }).env
