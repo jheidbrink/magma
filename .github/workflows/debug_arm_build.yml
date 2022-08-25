@@ -1,0 +1,34 @@
+name: debug-arm-workflow
+
+on:
+  workflow_dispatch: null
+
+permissions:
+  id-token: write  # required for OIDC auth to AWS
+
+jobs:
+  build-deploy-arm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+      - name: configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: "arn:aws:iam::820462792551:role/run_ec2_instances"
+          role-session-name: debug_arm_workflow
+          aws-region: us-east-1
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --assume-yes --no-install-recommends ansible python3-boto3 awscli
+      - name: Setup SSH
+        run: |
+          (){ echo "${{ secrets.AWS_JAN_EC2_GITHUB_ACTIONS_RSA }}" > ~/.ssh/id_rsa-build_arm
+          chmod go-rwx ~/.ssh/id_rsa-build_arm
+          echo > ~/.ansible.cfg <<EOF
+          [defaults]
+          host_key_checking = False
+          EOF
+      - name: Run the ansible script to build on graviton
+        run: |
+          ansible-playbook --extra-vars "magma_hash=${GITHUB_SHA:0:8} magma_branch=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}" lte/gateway/deploy/arm_build.yml
