@@ -19,8 +19,7 @@ jobs:
           aws-region: us-east-1
       - name: Install Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install --assume-yes --no-install-recommends ansible python3-boto3 awscli
+          pip install ansible awscli boto3
       - name: Setup SSH
         run: |
           mkdir ~/.ssh
