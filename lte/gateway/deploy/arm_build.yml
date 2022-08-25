@@ -19,12 +19,12 @@
     arm_security_group: sg-0eedadcb5f1871dd2  # public_ssh
     arm_ami_instance:  ami-0e515f534acdabbd7  # ubuntu/images/hvm-ssd/ubuntu-focal-20.04-arm64-server-20220810 in us-east-1
     arm_region: us-east-1
-    keypair: janheidbrink
+    keypair: github_actions_jan
     subnet: subnet-018f65489305151ad # public 1
-    ansible_ssh_private_key_file: "~/.ssh/id_rsa-build_arm"
+    ansible_ssh_private_key_file: "~/.ssh/id_rsa-github_actions_jan"
     ansible_ssh_user: "ubuntu"
     commit_id: "master"
-    magma_hash: "bla"
+    magma_hash: "jo"
   tasks:
     - name: Launch instance
       amazon.aws.ec2_instance:
@@ -95,12 +95,12 @@
 - name: Phase 2 - Configure and build on newly build instance
   hosts: launched
   vars:
-    ansible_ssh_private_key_file: "~/.ssh/janheidbrink@lf_aws.pem"
+    ansible_ssh_private_key_file: "~/.ssh/id_rsa-github_actions_jan"
     ansible_ssh_user: "ubuntu"
     magma_dir: /tmp/magma/
     magma_repo: https://github.com/magma/magma.git
     magma_branch: master #default value
-    magma_hash: "bla"
+    magma_hash: "jo"
   tasks:
     - name: Configure the instance
       become: true

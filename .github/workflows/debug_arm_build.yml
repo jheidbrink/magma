@@ -23,8 +23,8 @@ jobs:
           sudo apt-get install --assume-yes --no-install-recommends ansible python3-boto3 awscli
       - name: Setup SSH
         run: |
-          (){ echo "${{ secrets.AWS_JAN_EC2_GITHUB_ACTIONS_RSA }}" > ~/.ssh/id_rsa-build_arm
-          chmod go-rwx ~/.ssh/id_rsa-build_arm
+          echo "${{ secrets.AWS_JAN_EC2_GITHUB_ACTIONS_RSA }}" > ~/.ssh/id_rsa-github_actions_jan
+          chmod go-rwx ~/.ssh/id_rsa-github_actions_jan
           echo > ~/.ansible.cfg <<EOF
           [defaults]
           host_key_checking = False
