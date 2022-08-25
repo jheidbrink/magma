@@ -16,12 +16,12 @@
   gather_facts: False
   vars:
     arm_instance_type: t4g.medium
-    arm_security_group: sg-068f38e992f0ffb63
-    arm_ami_instance: ami-00a0488e9d5582804
-    arm_region: us-west-1
+    arm_security_group: sg-0eedadcb5f1871dd2  # public_ssh
+    arm_ami_instance:  ami-0e515f534acdabbd7  # ubuntu/images/hvm-ssd/ubuntu-focal-20.04-arm64-server-20220810 in us-east-1
+    arm_region: us-east-1
     keypair: janheidbrink
-    arm_vpc: subnet-2674e740
-    ansible_ssh_private_key_file: "~/.ssh/janheidbrink@lf_aws.pem"
+    subnet: subnet-018f65489305151ad # public 1
+    ansible_ssh_private_key_file: "~/.ssh/id_rsa-build_arm"
     ansible_ssh_user: "ubuntu"
     commit_id: "master"
     magma_hash: "bla"
@@ -35,7 +35,7 @@
         image_id: "{{ arm_ami_instance }}"
         wait: true
         region: "{{ arm_region }}"
-        vpc_subnet_id: "{{ arm_vpc }}"
+        vpc_subnet_id: "{{ subnet }}"
         volumes:
           - device_name: /dev/sda1
             ebs:
@@ -62,7 +62,7 @@
         image_id: "{{ arm_ami_instance }}"
         wait: true
         region: "{{ arm_region }}"
-        vpc_subnet_id: "{{ arm_vpc }}"
+        vpc_subnet_id: "{{ subnet }}"
         volumes:
           - device_name: /dev/sda1
             ebs:
