@@ -26,7 +26,7 @@ jobs:
           chmod go-rwx ~/.ssh
           echo "${{ secrets.AWS_JAN_EC2_GITHUB_ACTIONS_RSA }}" > ~/.ssh/id_rsa-github_actions_jan
           chmod go-rwx ~/.ssh/id_rsa-github_actions_jan
-          echo > ~/.ansible.cfg <<EOF
+          cat > ~/.ansible.cfg <<EOF
           [defaults]
           host_key_checking = False
           EOF
