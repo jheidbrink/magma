@@ -9,10 +9,6 @@ on:  # yamllint disable-line rule:truthy
         description: Use the remote cache
         type: boolean
         default: true
-      without_fabric:
-        description: Dont even use Fabric to run the actual integ tests
-        type: boolean
-        default: true
   workflow_run:
     workflows:
       - build-all
@@ -36,7 +32,6 @@ jobs:
       - name: Print inputs
         run: |
           echo "remote_cache: ${{ github.event.inputs.remote_cache }}"
-          echo "Without Fabric: ${{ github.event.inputs.without_fabric }}"
       - uses: actions/checkout@v2
         with:
           ref: ${{ env.SHA }}
@@ -130,12 +125,10 @@ jobs:
       - name: Create the Python environment
         # While the services start binaries built with Bazel, some helpers like service_util.py
         # or generate_service_config.py require the Python environment built with make
-        if: github.event.inputs.without_fabric == 'true'
         run: |
           cd lte/gateway
           echo "cd magma/lte/gateway/python && make buildenv" | vagrant ssh magma
       - name: Start magma
-        if: github.event.inputs.without_fabric == 'true'
         run: |
           cd lte/gateway
           echo "sudo systemctl start magma@magmad" | vagrant ssh magma
@@ -143,47 +136,35 @@ jobs:
           sleep 10
           echo "Getting logs so we can verify that magma actually started"
           echo "sudo journalctl --since=today" | vagrant ssh magma
-      - name: Run the integ test with Fabric
-        if: github.event.inputs.without_fabric == 'false'
-        run: |
-          cd lte/gateway
-          fab integ_test_nobuild
       - name: Start and provision the magma_trfserver VM
-        if: github.event.inputs.without_fabric == 'true'
         run: |
           cd lte/gateway
           vagrant up magma_trfserver
       - name: Start and provision the magma_test VM
-        if: github.event.inputs.without_fabric == 'true'
         run: |
           cd lte/gateway
           vagrant up magma_test
       - name: Build Python
-        if: github.event.inputs.without_fabric == 'true'
         run: |
           cd lte/gateway
           echo "cd magma/lte/gateway/python && make" | vagrant ssh magma_test
       - name: Build the integ tests
-        if: github.event.inputs.without_fabric == 'true'
         run: |
           cd lte/gateway
           echo "cd magma/lte/gateway/python/integ_tests && make" | vagrant ssh magma_test
       - name: Disable TCP checksumming everywhere
-        if: github.event.inputs.without_fabric == 'true'
         run: |
           cd lte/gateway
           echo "sudo ethtool --offload eth1 rx off tx off; sudo ethtool --offload eth2 rx off tx off" | vagrant ssh magma
           echo "sudo ethtool --offload eth1 rx off tx off; sudo ethtool --offload eth2 rx off tx off" | vagrant ssh magma_test
           echo "sudo ethtool --offload eth1 rx off tx off; sudo ethtool --offload eth2 rx off tx off" | vagrant ssh magma_trfserver
       - name: Start trfserver
-        if: github.event.inputs.without_fabric == 'true'
         run: |
           cd lte/gateway
           # even with the --daemon flag, the traffic server seems to keep stdout and stderr open,
           # so we need to redirect it to /dev/null so that the command exits.
           echo "sudo /usr/local/bin/traffic_server.py --daemon 192.168.60.144 62462 >trfserver_stdout 2>trfserver_stderr" | vagrant ssh magma_trfserver
       - name: Run the integ tests
-        if: github.event.inputs.without_fabric == 'true'
         run: |
           cd lte/gateway
           # The following ssh command needs to force tty allocation via the -tt flag, otherwise we get "SInit(): Could not initialize the Logging streams"
