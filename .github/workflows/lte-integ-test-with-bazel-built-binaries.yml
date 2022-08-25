@@ -167,7 +167,7 @@ jobs:
       - name: Run the integ tests
         run: |
           cd lte/gateway
-          # The following ssh command needs to force tty allocation via the -tt flag, otherwise we get "SInit(): Could not initialize the Logging streams"
+          # The following ssh command needs to force tty allocation via the -ttt flag, otherwise we get "SInit(): Could not initialize the Logging streams"
           vagrant ssh --command "cd magma/lte/gateway/python/integ_tests && source ~/build/python/bin/activate && export GATEWAY_IP=192.168.60.142 && make -i integ_test enable-flaky-retry=true" magma_test -- -ttt
       - name: Get test results
         if: always()
