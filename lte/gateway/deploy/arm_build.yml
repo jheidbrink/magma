@@ -47,11 +47,10 @@
           Environment: CI
       register: ec2
 
-    - name: Sleep for 10 seconds if AWS didn't return the public ip
+    - name: Sleep for 10 seconds
       ansible.builtin.wait_for:
         timeout: 10
       delegate_to: localhost
-      when: ec2.instances[0].public_ip_address is undefined
 
     - name: Fetch the public ip address
       amazon.aws.ec2_instance:
@@ -73,7 +72,6 @@
         tags:
           Environment: CI
       register: ec2
-      when: ec2.instances[0].public_ip_address is undefined
 
     - name: Printing useful debug infos
       ansible.builtin.debug:
