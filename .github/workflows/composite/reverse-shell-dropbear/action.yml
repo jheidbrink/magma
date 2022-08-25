@@ -1,0 +1,123 @@
+
+name: 'Reverse Shell with dropbear'
+description: 'Start a reverse shell for better workflow debugging with dropbear'
+inputs:
+  ssh_public_key:
+    type: string
+    description: The public key of the SSH key that is used to authenticate to dropbear
+    default: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCuPxPfs186g/Nt+wK3/ya4OynqmYNk24pJZ1cNrhiwI2E8o4csyO8YAl1I8sWlDr27HJIWCyOYb2CGxr45liBkBZAza7NqRNZNq6IfOcXU/eMUOttGcwY8bIJn1C7WILoWzrYF5fp/BcHnz/C1WiGjSpscEYghAgAnO8edsd2EbZZsD9lM4HujbtaBoUmLT7ro7697seum5j1V+AwCIheaQyJVU60ak2GQSqzlsp9bmWDOmZ3VGll124cnVSmKCeAstz9wiSqINJ/wEB4hMAkkgCzEQtKtlePNwuMyLslwDNRi++cBDPyHyRB8akbFLVBl1qk0ihXwFdKKvP6SOkcTR+HNkwF4ha46slw3i8CjHxyiVUtyuziibOWe5fg835F6zmu++hLyk6XU8XgeNCWy8frhzS2wtugNb2j4axVC0BVEt3tl6w0hPxY1sHTqJMchLBTsUngPTca8nj2bb5TxDvDnU+tsdB4xcSg6v8Gts3qCqM9NoZt64b2pm1XQ3wU= heidbrij@petrosilia"
+  iam_role:
+    type: string
+    description: 'The IAM role to assume to query/start EC2 instances'
+  ip:
+    type: string
+    description: 'The IP to connect to'
+  middleman_private_key:
+    type: string
+    description: 'The private SSH key that allows us to connect to the EC2 instance'
+    required: true
+  middleman_host_rsa_key:
+    type: string
+    description: ''
+    required: true
+  middleman_host_ed25519_key:
+    type: string
+    description: ''
+    required: true
+outputs:
+  dropbear_logfile:
+    description: "Location of the dropbear logfile"
+    value: ${{ steps.run_reverse_shell.outputs.dropbear_logfile }}
+runs:
+  using: "composite"
+  steps:
+    - run: echo Hello ${{ inputs.who-to-greet }}.
+      shell: bash
+    - run: echo "${{ github.action_path }}" >> $GITHUB_PATH
+      shell: bash          
+    - name: Validate parameters
+      run: |
+        if [[ -z "${{ inputs.ip }}" ]] && [[ -z "${{ inputs.iam_role }}" ]]
+        then
+          echo "Need to specify IP or iam_role"
+        fi
+        if [[ -n "${{ inputs.ip }}" ]] && [[ -n "${{ inputs.iam_role }}" ]]
+        then
+          echo "Need to specify IP or iam_role, not both"
+        fi
+      shell: bash
+    - name: find free ip
+      id: find_ip
+      uses: ./.github/workflows/composite/free_ec2_instance
+      with:
+        iam_role: ${{ inputs.iam_role }}
+        ip: ${{ inputs.ip }}
+    - name: run a reverse shell
+      id: run_reverse_shell
+      shell: bash
+      run: |
+        set -x
+
+        export ip=${{ steps.find_ip.outputs.ip }}
+
+        echo "preparing SSH keys"
+        mkdir -p ~./ssh
+        chmod go-rwx ~/.ssh
+        echo "${{ inputs.middleman_private_key }}" > ~/.ssh/reverse_shell_middleman.pem
+        chmod go-rwx ~/.ssh/reverse_shell_middleman.pem
+        touch ~/.ssh/known_hosts
+        chmod go-rwx ~/.ssh/known_hosts
+        echo "${ip} ${{ inputs.middleman_host_rsa_key }}" >> ~/.ssh/known_hosts
+        echo "${ip} ${{ inputs.middleman_host_ed25519_key }}" >> ~/.ssh/known_hosts
+
+        echo "Waiting for SSH server"
+        until nc -w 0 ${ip} 22
+        do
+          echo -n "."
+          sleep 3
+        done
+        echo ""
+        echo "After SSH server is up, we need to wait a bit more for the machine to update the host keys (in machines userdata)."
+        echo "Given that the dropbear installation below takes some time, we should be fine"
+
+
+        # dropbear reverse shell (inspired by https://gist.github.com/lava/b8b3c4355ba6a23e6b743495f704e407)
+        brew install dropbear
+        touch ~/.ssh/authorized_keys
+        chmod go-rwx ~/.ssh/authorized_keys
+        echo "Configuring ssh key for authentication"
+        echo "${{ inputs.ssh_public_key }}" >> ~/.ssh/authorized_keys
+        chmod go-w ~
+        echo "Generating dropbear host keys"
+        dropbearkey -t rsa -f ~/.ssh/dropbear.rsa
+        echo "::set-output name=dropbear_host_rsa_key::$(dropbearkey -y -f ~/.ssh/dropbear.rsa | grep ssh-rsa)"
+        dropbearkey -t ecdsa -f ~/.ssh/dropbear.ecdsa
+        echo "::set-output name=dropbear_host_rsa_key::$(dropbearkey -y -f ~/.ssh/dropbear.ecdsa | grep ecdsa-sha2-nistp256)"
+        dropbearkey -t ed25519 -f ~/.ssh/dropbear.ed25519
+        echo "::set-output name=dropbear_host_rsa_key::$(dropbearkey -y -f ~/.ssh/dropbear.ed25519 | grep ssh-ed25519)"
+
+        echo "provisioning dropbear host keys to middleman"
+        { echo -n "${{ github.job }}-${{ github.run_number }} "; dropbearkey -y -f ~/.ssh/dropbear.rsa     | grep ssh-rsa; }             | ssh -i ~/.ssh/reverse_shell_middleman.pem ubuntu@${ip} "touch ~/.ssh/known_hosts; cat >> ~/.ssh/known_hosts"
+        { echo -n "${{ github.job }}-${{ github.run_number }} "; dropbearkey -y -f ~/.ssh/dropbear.ecdsa   | grep ecdsa-sha2-nistp256; } | ssh -i ~/.ssh/reverse_shell_middleman.pem ubuntu@${ip} "touch ~/.ssh/known_hosts; cat >> ~/.ssh/known_hosts"
+        { echo -n "${{ github.job }}-${{ github.run_number }} "; dropbearkey -y -f ~/.ssh/dropbear.ed25519 | grep ssh-ed25519; }         | ssh -i ~/.ssh/reverse_shell_middleman.pem ubuntu@${ip} "touch ~/.ssh/known_hosts; cat >> ~/.ssh/known_hosts"
+
+        echo "Starting dropbear"
+        dropbear -F -E -R -w -p 2345 -r ~/.ssh/dropbear.rsa -r ~/.ssh/dropbear.ecdsa -r ~/.ssh/dropbear.ed25519 &> ~/dropbear-logs.txt &
+        # -F Stay in foreground
+        # -E log to stderr rather than syslog
+        # -R Generate hostkeys automatically
+        # -w Disallow root logins
+        # -p port
+        # -r specify host key files, dont load default locations (-R will create keys at default locations)
+        middleman_port=$(( 2000 + $RANDOM % 50000))
+        echo "Forwarding port to ${middleman_port} on middleman"
+        ssh -N -i ~/.ssh/reverse_shell_middleman.pem -R ${middleman_port}:127.0.0.1:2345 ubuntu@${ip} &
+        echo "::set-output name=middleman_port::${middleman_port}"
+        echo "::set-output name=dropbear_logfile::~/dropbear-logs.txt"
+
+    - name: Print reverse shell connection instructions
+      shell: bash
+      run: |
+        echo "Connect to the runner with the following commands (caution, this forwards your SSH authentication agent to the middleman, you should trust that instance):"
+        echo ssh -A -t ubuntu@${{ steps.find_ip.outputs.ip }} \'tmux new-session -s reverse-shell-${{ github.job }}-${{ github.run_number }} \\\; send-keys \"ssh -v -o HostKeyAlias=${{ github.job }}-${{ github.run_number }} -o ServerAliveInterval=60 -p ${{ steps.run_reverse_shell.outputs.middleman_port }} $(whoami)@127.0.0.1\" C-m\'
+        echo "Consider opening a screen session inside the runner: TERM=xterm screen"
