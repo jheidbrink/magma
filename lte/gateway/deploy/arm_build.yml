@@ -108,7 +108,6 @@
         pkg:
           - docker.io
           - git
-          - docker-compose
           - apt-transport-https
           - curl
           - gnupg
