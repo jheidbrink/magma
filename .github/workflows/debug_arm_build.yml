@@ -33,4 +33,4 @@ jobs:
           cat ~/.ansible.cfg
       - name: Run the ansible script to build on graviton
         run: |
-          ansible-playbook --extra-vars "magma_hash=${GITHUB_SHA:0:8} magma_branch=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}" lte/gateway/deploy/arm_build.yml
+          ansible-playbook -vvv --extra-vars "magma_hash=${GITHUB_SHA:0:8} magma_branch=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}" lte/gateway/deploy/arm_build.yml
