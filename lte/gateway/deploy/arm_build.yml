@@ -16,26 +16,29 @@
   gather_facts: False
   vars:
     arm_instance_type: t4g.medium
-    arm_security_group: sg-0eedadcb5f1871dd2  # public_ssh
-    arm_ami_instance:  ami-0e515f534acdabbd7  # ubuntu/images/hvm-ssd/ubuntu-focal-20.04-arm64-server-20220810 in us-east-1
-    arm_region: us-east-1
-    keypair: github_actions_jan
-    subnet: subnet-018f65489305151ad # public 1
-    ansible_ssh_private_key_file: "~/.ssh/id_rsa-github_actions_jan"
-    ansible_ssh_user: "ubuntu"
-    commit_id: "master"
-    magma_hash: "jo"
+    arm_security_group: sg-06f6d3272c1bea936  # public_ssh in tng-magma AWS account in us-east-1
+    arm_vpc: subnet-0452cc2ee349a4d1a  # public 1 in tng-magma AWS account in us-east-1
+    ansible_ssh_private_key_file: "~/.ssh/id_rsa_jan_tng_magmacore"
+    ansible_ssh_user: ubuntu
+    commit_id: master
+    magma_hash: bla
   tasks:
+    - name: Find out Ubuntu 20.04 AMI ID
+      amazon.aws.ec2_ami_info:
+        filters:
+          name: "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-arm64-server-20220810"
+      register: ubuntuAmiSearchResult
+
     - name: Launch instance
       amazon.aws.ec2_instance:
         name: "arm-build-janheidbrink-{{ commit_id }}-{{ magma_hash }}"
-        key_name: "{{ keypair }}"
+        launch_template:
+          name: "public-instance-custom-host-keys-multiple-users"
         security_group: "{{ arm_security_group }}"
         instance_type: "{{ arm_instance_type }}"
-        image_id: "{{ arm_ami_instance }}"
+        image_id: "{{ ubuntuAmiSearchResult.images[0].image_id }}"
         wait: true
-        region: "{{ arm_region }}"
-        vpc_subnet_id: "{{ subnet }}"
+        vpc_subnet_id: "{{ arm_vpc }}"
         volumes:
           - device_name: /dev/sda1
             ebs:
@@ -55,13 +58,13 @@
     - name: Fetch the public ip address
       amazon.aws.ec2_instance:
         name: "arm-build-janheidbrink-{{ commit_id }}-{{ magma_hash }}"
-        key_name: "{{ keypair }}"
+        launch_template:
+          name: "public-instance-custom-host-keys-multiple-users"
         security_group: "{{ arm_security_group }}"
         instance_type: "{{ arm_instance_type }}"
-        image_id: "{{ arm_ami_instance }}"
+        image_id: "{{ ubuntuAmiSearchResult.images[0].image_id }}"
         wait: true
-        region: "{{ arm_region }}"
-        vpc_subnet_id: "{{ subnet }}"
+        vpc_subnet_id: "{{ arm_vpc }}"
         volumes:
           - device_name: /dev/sda1
             ebs:
@@ -157,8 +160,6 @@
 
 - name: Phase 3 - Kill the arm instance
   hosts: localhost
-  vars:
-    arm_region: us-west-1
   tasks:
     - name: Terminate instances that were previously launched
       amazon.aws.ec2_instance:
