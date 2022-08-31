@@ -16,10 +16,11 @@
   gather_facts: False
   vars:
     arm_instance_type: t4g.medium
-    arm_security_group: sg-06f6d3272c1bea936  # public_ssh in tng-magma AWS account in us-east-1
-    arm_vpc: subnet-0452cc2ee349a4d1a  # public 1 in tng-magma AWS account in us-east-1
+    launch_template_id: lt-018b5c8d10411dab8  # public-instance-custom-host-keys-multiple-users
+    subnet: subnet-0452cc2ee349a4d1a  # public 1 in tng-magma AWS account in us-east-1
     ansible_ssh_private_key_file: "~/.ssh/id_rsa_jan_tng_magmacore"
     ansible_ssh_user: ubuntu
+    ansible_port: 2345
     commit_id: master
     magma_hash: bla
   tasks:
@@ -33,12 +34,15 @@
       amazon.aws.ec2_instance:
         name: "arm-build-janheidbrink-{{ commit_id }}-{{ magma_hash }}"
         launch_template:
-          name: "public-instance-custom-host-keys-multiple-users"
-        security_group: "{{ arm_security_group }}"
+          # name: "public-instance-custom-host-keys-multiple-users"
+          # name needs https://github.com/ansible-collections/amazon.aws/pull/587/files
+          # Ansible 2.12 from Nixos 22.05 doesn't seem to contain a high enough version of amazon.aws,
+          # so specify launch template via id:
+          id: "{{ launch_template_id }}"
+        vpc_subnet_id: "{{ subnet }}"
         instance_type: "{{ arm_instance_type }}"
         image_id: "{{ ubuntuAmiSearchResult.images[0].image_id }}"
         wait: true
-        vpc_subnet_id: "{{ arm_vpc }}"
         volumes:
           - device_name: /dev/sda1
             ebs:
@@ -59,12 +63,11 @@
       amazon.aws.ec2_instance:
         name: "arm-build-janheidbrink-{{ commit_id }}-{{ magma_hash }}"
         launch_template:
-          name: "public-instance-custom-host-keys-multiple-users"
-        security_group: "{{ arm_security_group }}"
+          id: "{{ launch_template_id }}"
+        vpc_subnet_id: "{{ subnet }}"
         instance_type: "{{ arm_instance_type }}"
         image_id: "{{ ubuntuAmiSearchResult.images[0].image_id }}"
         wait: true
-        vpc_subnet_id: "{{ arm_vpc }}"
         volumes:
           - device_name: /dev/sda1
             ebs:
@@ -96,8 +99,9 @@
 - name: Phase 2 - Configure and build on newly build instance
   hosts: launched
   vars:
-    ansible_ssh_private_key_file: "~/.ssh/id_rsa-github_actions_jan"
+    ansible_ssh_private_key_file: "~/.ssh/id_rsa_jan_tng_magmacore"
     ansible_ssh_user: "ubuntu"
+    ansible_port: 2345
     magma_dir: /tmp/magma/
     magma_repo: https://github.com/magma/magma.git
     magma_branch: master #default value
