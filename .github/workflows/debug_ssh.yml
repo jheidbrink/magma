@@ -6,6 +6,10 @@ on:
       sleep_duration:
         type: string
         required: true
+      extra_options:
+        type: string
+        default: ""
+        required: false
 
 jobs:
   ssh-and-sleep:
@@ -25,6 +29,7 @@ jobs:
         run: |
           date
           echo "SSH & Sleeping for ${{ inputs.sleep_duration }}"
-          ssh -p 2345 -i ~/.ssh/id_rsa-github_actions_jan ubuntu@52.0.2.174 sleep "${{ inputs.sleep_duration }}"
+          echo "Extra options are ${{ inputs.extra_options }}"
+          ssh -p 2345 -i ~/.ssh/id_rsa-github_actions_jan ${{ inputs.extra_options }} ubuntu@52.0.2.174 sleep "${{ inputs.sleep_duration }}"
           echo "Done with SSH"
           date
