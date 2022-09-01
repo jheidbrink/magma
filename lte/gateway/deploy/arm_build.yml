@@ -57,7 +57,6 @@
     - name: Sleep for 10 seconds
       ansible.builtin.wait_for:
         timeout: 10
-      delegate_to: localhost
 
     - name: Fetch the public ip address
       amazon.aws.ec2_instance:
@@ -103,11 +102,9 @@
         cmd: cat ~/.ssh/known_hosts
 
     - name: Wait for SSH to come up
-      delegate_to: "{{ item.public_dns_name }}"
       wait_for_connection:
         delay: 10
         timeout: 320
-      loop: "{{ ec2.instances }}"
 
 - name: Phase 2 - Configure and build on newly build instance
   hosts: launched
