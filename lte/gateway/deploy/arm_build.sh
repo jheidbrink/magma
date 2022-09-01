@@ -65,7 +65,7 @@ done
 echo "SSH server is up and running"
 
 echo "deactivating short safety shutdown and activating safety shutdown in 4 hours"
-$ssh_command "sudo systemctl shutdown -c && sudo systemctl shutdown -h 240"
+$ssh_command "sudo shutdown -c && sudo shutdown -h 240"
 
 echo "Installing packages"
 $ssh_command <<EOT
