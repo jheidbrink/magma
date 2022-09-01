@@ -22,8 +22,7 @@ jobs:
           pip install ansible awscli boto3
       - name: Setup SSH
         run: |
-          mkdir ~/.ssh
-          chmod go-rwx ~/.ssh
+          mkdir -p ~/.ssh && chmod go-rwx ~/.ssh
           echo "${{ secrets.AWS_JAN_EC2_GITHUB_ACTIONS_RSA }}" > ~/.ssh/id_rsa
           chmod go-rwx ~/.ssh/id_rsa
       - name: Run the ansible script to build on graviton
