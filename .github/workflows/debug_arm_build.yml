@@ -25,12 +25,7 @@ jobs:
           mkdir ~/.ssh
           chmod go-rwx ~/.ssh
           echo "${{ secrets.AWS_JAN_EC2_GITHUB_ACTIONS_RSA }}" > ~/.ssh/id_rsa
-          chmod go-rwx ~/.ssh/id_rsa-github_actions_jan
-          cat > ~/.ansible.cfg <<EOF
-          [defaults]
-          host_key_checking = False
-          EOF
-          cat ~/.ansible.cfg
+          chmod go-rwx ~/.ssh/id_rsa
       - name: Run the ansible script to build on graviton
         run: |
           ansible-playbook -vvv --extra-vars "magma_hash=${GITHUB_SHA:0:8} magma_branch=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}" lte/gateway/deploy/arm_build.yml
