@@ -33,7 +33,7 @@ aws ec2 run-instances \
     --instance-type t4g.medium \
     --image-id "$ami_id" \
     --ebs-optimized \
-    --block-device-mapping '[ { "DeviceName": "/dev/xvda", "Ebs": { "VolumeSize": 120 } } ]' \
+    --block-device-mapping '[ { "DeviceName": "/dev/sda1", "Ebs": { "VolumeSize": 50 } } ]' \
     > run-instances.json
 
 instance_id=$(jq --raw-output '.Instances[0].InstanceId' < run-instances.json)
