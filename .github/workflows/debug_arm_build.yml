@@ -14,7 +14,7 @@ jobs:
       - name: configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: "arn:aws:iam::820462792551:role/run_ec2_instances"
+          role-to-assume: "arn:aws:iam::269966122452:role/github_actions"
           role-session-name: debug_arm_workflow
           aws-region: us-east-1
       - name: Install Dependencies
