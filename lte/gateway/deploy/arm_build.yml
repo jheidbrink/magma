@@ -93,7 +93,10 @@
       copy:
         dest: ~/.ssh/known_hosts
         content: "[{{ ec2.instances[0].public_ip_address }}]:{{ ansible_port }} ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDOCQ2Tm8BRzQ+iqpBz4HFo6Ua4UWlYUmpIwWdwah3IzV4OUmN29jxcu4W93wS1hk01jmFNR2XNQSqSpfcVlCtsaVT8pd3kcAe7YEw2R0lLbaHPIALRhl/HqicuWKISFB357vSRy+Bqqw/H0MNm1KFwfIgBseL2X5Cjh8Ftn78EDhf8VRCj5Rt2ZF5hAX+eJyHEhX5htCtc5R3k4tRnWYwD2Jy9L+J2nHq6t96XdweKTwFLQaxPHTliXcJ4Ox6ku26g6j3BPc9rXvrfNfCYASeEbKF2rmhZ4cpd3XlXjYceiZAunlqcLSMBqMWdrKX66mJxJphsuZpKlVruJhJUOit4rHLMVb6B1Epd5ewcZjQO7w2XOcGJVGSzUUUkN7Hk4DMFpRzeTnolVXFiaaQg5RRC3ZJLCLtUW1MAKDNyQaUl6Q5y80gAVs/Dipx0l6zRxoONXScikTBbMHOJp9flB8++z8iixN48/L6CPe1EOOcVuU7P5PboKpLJFF1f8s1RZyjSJty6/v/7oy/nm+YJ/1nn7MI69KlyaU/SIOxJYUE7yr0l77sC/4HVhKrgiy/yqeXXNHCXRYoYtafAcGg5gAqRl8tkN0xBL+x8/G19B/k6ULf+iSc3nFgPBUa1NW4uFcCjyWjkhqdnnXYkiat91Mvsr7r+UrRYOVpCzDKS5vTr5w=="
-        mode: 600
+
+    - name: whoami
+      shell:
+        cmd: whoami
 
     - name: Show the known_hosts file
       shell:
