@@ -11,13 +11,13 @@ ssh_host_rsa_key="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDOCQ2Tm8BRzQ+iqpBz4HFo6U
 ssh_port=2345
 # --- end of launch-template settings ---
 
-echo "Searching for launch-template public-instance-custom-host-keys-multiple-users"
-launch_template_id=$(
-  aws ec2 describe-launch-templates \
-    --launch-template-names "github_actions_ec2_instances" \
-      | jq --raw-output '.LaunchTemplates[0].LaunchTemplateId'
-)
-echo "Found launch template $launch_template_id"
+#echo "Searching for launch template github_actions_ec2_instances"
+#launch_template_id=$(
+#  aws ec2 describe-launch-templates \
+#    --launch-template-names "github_actions_ec2_instances" \
+#      | jq --raw-output '.LaunchTemplates[0].LaunchTemplateId'
+#)
+#echo "Found launch template $launch_template_id"
 
 echo "Searching for AMI ubuntu/images/hvm-ssd/ubuntu-focal-20.04-arm64-server-20220810"
 ami_id=$(
@@ -29,7 +29,7 @@ echo "Found AMI $ami_id"
 
 echo "Launching instance"
 aws ec2 run-instances \
-    --launch-template LaunchTemplateName="public-instance-custom-host-keys-multiple-users" \
+    --launch-template LaunchTemplateName="github_actions_ec2_instances" \
     --instance-type t4g.medium \
     --image-id "$ami_id" \
     --ebs-optimized \
