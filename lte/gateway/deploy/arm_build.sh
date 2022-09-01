@@ -2,13 +2,9 @@
 
 set -euo pipefail
 
-ssh_key=${SSH_KEY_FILE:-~/.ssh/id_rsa}
-branch=${MAGMA_BRANCH:-master}
-
-if [[ -z "$AWS_REGION" ]]
-then
-    export AWS_REGION=us-east-1
-fi
+SSH_KEY_FILE=${SSH_KEY_FILE:-~/.ssh/id_rsa}
+MAGMA_BRANCH=${MAGMA_BRANCH:-master}
+export AWS_REGION=${AWS_REGION:-us-east-1}
 
 # --- will be configured by launch-template public-instance-custom-host-keys-multiple-users: ---
 ssh_host_rsa_key="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDOCQ2Tm8BRzQ+iqpBz4HFo6Ua4UWlYUmpIwWdwah3IzV4OUmN29jxcu4W93wS1hk01jmFNR2XNQSqSpfcVlCtsaVT8pd3kcAe7YEw2R0lLbaHPIALRhl/HqicuWKISFB357vSRy+Bqqw/H0MNm1KFwfIgBseL2X5Cjh8Ftn78EDhf8VRCj5Rt2ZF5hAX+eJyHEhX5htCtc5R3k4tRnWYwD2Jy9L+J2nHq6t96XdweKTwFLQaxPHTliXcJ4Ox6ku26g6j3BPc9rXvrfNfCYASeEbKF2rmhZ4cpd3XlXjYceiZAunlqcLSMBqMWdrKX66mJxJphsuZpKlVruJhJUOit4rHLMVb6B1Epd5ewcZjQO7w2XOcGJVGSzUUUkN7Hk4DMFpRzeTnolVXFiaaQg5RRC3ZJLCLtUW1MAKDNyQaUl6Q5y80gAVs/Dipx0l6zRxoONXScikTBbMHOJp9flB8++z8iixN48/L6CPe1EOOcVuU7P5PboKpLJFF1f8s1RZyjSJty6/v/7oy/nm+YJ/1nn7MI69KlyaU/SIOxJYUE7yr0l77sC/4HVhKrgiy/yqeXXNHCXRYoYtafAcGg5gAqRl8tkN0xBL+x8/G19B/k6ULf+iSc3nFgPBUa1NW4uFcCjyWjkhqdnnXYkiat91Mvsr7r+UrRYOVpCzDKS5vTr5w=="
@@ -58,7 +54,7 @@ echo "Public IP is $public_ip"
 echo "Preparing SSH"
 touch ~/.ssh/known_hosts && chmod go-rwx ~/.ssh/known_hosts
 echo "[$public_ip]:$ssh_port $ssh_host_rsa_key" >> ~/.ssh/known_hosts
-ssh_command="ssh -p $ssh_port -i $ssh_key -o ServerAliveInterval=60 ubuntu@$public_ip"
+ssh_command="ssh -p $ssh_port -i $SSH_KEY_FILE -o ServerAliveInterval=60 ubuntu@$public_ip"
 echo "The ssh command is: $ssh_command"
 
 echo "Waiting for customized SSH server to come up"
@@ -91,7 +87,7 @@ sudo chmod +x /usr/local/bin/docker-compose
 EOT
 
 echo "Cloning magma repository"
-$ssh_command "git clone --branch $branch --depth 1 https://github.com/magma/magma.git"
+$ssh_command "git clone --branch $MAGMA_BRANCH --depth 1 https://github.com/magma/magma.git"
 
 echo "Building the containers"
 $ssh_command <<EOT
