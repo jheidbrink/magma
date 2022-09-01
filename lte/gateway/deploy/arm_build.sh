@@ -36,6 +36,8 @@ aws ec2 run-instances \
     --launch-template LaunchTemplateName="public-instance-custom-host-keys-multiple-users" \
     --instance-type t4g.medium \
     --image-id "$ami_id" \
+    --ebs-optimized \
+    --block-device-mapping '[ { "DeviceName": "/dev/xvda", "Ebs": { "VolumeSize": 120 } } ]' \
     > run-instances.json
 
 instance_id=$(jq --raw-output '.Instances[0].InstanceId' < run-instances.json)
