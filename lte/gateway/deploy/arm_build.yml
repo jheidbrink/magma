@@ -17,7 +17,7 @@
   vars:
     arm_instance_type: t4g.medium
     launch_template_id: lt-018b5c8d10411dab8  # public-instance-custom-host-keys-multiple-users
-    subnet: subnet-0452cc2ee349a4d1a  # public 1 in tng-magma AWS account in us-east-1
+    subnet: subnet-0452cc2ee349a4d1a  # public 1 in tng-magma AWS account in us-east-1. I thought the network interfaces in the launch template would cover this, but they don't
     ansible_ssh_private_key_file: "~/.ssh/id_rsa_jan_tng_magmacore"
     ansible_ssh_user: ubuntu
     ansible_port: 2345
