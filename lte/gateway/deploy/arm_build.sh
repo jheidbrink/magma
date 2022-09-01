@@ -60,7 +60,7 @@ echo "The ssh command is: $ssh_command"
 echo "Waiting for customized SSH server to come up"
 until $ssh_command sleep 0
 do
-    sleep 3
+    sleep 5
 done
 echo "SSH server is up and running"
 
