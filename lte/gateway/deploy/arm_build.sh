@@ -6,7 +6,7 @@ SSH_KEY_FILE=${SSH_KEY_FILE:-~/.ssh/id_rsa}
 MAGMA_BRANCH=${MAGMA_BRANCH:-master}
 export AWS_REGION=${AWS_REGION:-us-east-1}
 
-# --- will be configured by launch-template public-instance-custom-host-keys-multiple-users: ---
+# --- will be configured by launch template github_actions_ec2_instances: ---
 ssh_host_rsa_key="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDOCQ2Tm8BRzQ+iqpBz4HFo6Ua4UWlYUmpIwWdwah3IzV4OUmN29jxcu4W93wS1hk01jmFNR2XNQSqSpfcVlCtsaVT8pd3kcAe7YEw2R0lLbaHPIALRhl/HqicuWKISFB357vSRy+Bqqw/H0MNm1KFwfIgBseL2X5Cjh8Ftn78EDhf8VRCj5Rt2ZF5hAX+eJyHEhX5htCtc5R3k4tRnWYwD2Jy9L+J2nHq6t96XdweKTwFLQaxPHTliXcJ4Ox6ku26g6j3BPc9rXvrfNfCYASeEbKF2rmhZ4cpd3XlXjYceiZAunlqcLSMBqMWdrKX66mJxJphsuZpKlVruJhJUOit4rHLMVb6B1Epd5ewcZjQO7w2XOcGJVGSzUUUkN7Hk4DMFpRzeTnolVXFiaaQg5RRC3ZJLCLtUW1MAKDNyQaUl6Q5y80gAVs/Dipx0l6zRxoONXScikTBbMHOJp9flB8++z8iixN48/L6CPe1EOOcVuU7P5PboKpLJFF1f8s1RZyjSJty6/v/7oy/nm+YJ/1nn7MI69KlyaU/SIOxJYUE7yr0l77sC/4HVhKrgiy/yqeXXNHCXRYoYtafAcGg5gAqRl8tkN0xBL+x8/G19B/k6ULf+iSc3nFgPBUa1NW4uFcCjyWjkhqdnnXYkiat91Mvsr7r+UrRYOVpCzDKS5vTr5w=="
 ssh_port=2345
 # --- end of launch-template settings ---
@@ -14,7 +14,7 @@ ssh_port=2345
 echo "Searching for launch-template public-instance-custom-host-keys-multiple-users"
 launch_template_id=$(
   aws ec2 describe-launch-templates \
-    --launch-template-names "public-instance-custom-host-keys-multiple-users" \
+    --launch-template-names "github_actions_ec2_instances" \
       | jq --raw-output '.LaunchTemplates[0].LaunchTemplateId'
 )
 echo "Found launch template $launch_template_id"
@@ -58,11 +58,14 @@ ssh_command="ssh -p $ssh_port -i $SSH_KEY_FILE -o ServerAliveInterval=60 ubuntu@
 echo "The ssh command is: $ssh_command"
 
 echo "Waiting for customized SSH server to come up"
-until $ssh_command echo test
+until $ssh_command sleep 0
 do
     sleep 3
 done
 echo "SSH server is up and running"
+
+echo "deactivating short safety shutdown and activating safety shutdown in 4 hours"
+$ssh_command "sudo systemctl shutdown -c && sudo systemctl shutdown -h 240"
 
 echo "Installing packages"
 $ssh_command <<EOT
