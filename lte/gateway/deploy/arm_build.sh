@@ -82,7 +82,7 @@ sudo curl -L "https://github.com/docker/compose/releases/download/v2.10.2/docker
 sudo chmod +x /usr/local/bin/docker-compose
 EOT
 
-echo "Cloning magma repository"
+echo "Cloning magma repository ${MAGMA_REPO_URL}:${MAGMA_BRANCH}"
 $ssh_command "git clone --branch $MAGMA_BRANCH --depth 1 $MAGMA_REPO_URL"
 
 echo "Building the containers"

@@ -17,6 +17,10 @@ jobs:
   build-deploy-arm-shell:
     runs-on: ubuntu-latest
     steps:
+      - name: Echo inputs
+        run: |
+          echo "url: ${{ inputs.MAGMA_REPO_URL }}"
+          echo "branch: ${{ inputs.MAGMA_BRANCH }}"
       - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
       - name: configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
