@@ -1,7 +1,14 @@
 name: debug-arm-workflow-shell
 
 on:
-  workflow_dispatch: null
+  workflow_dispatch:
+    inputs:
+      MAGMA_REPO_URL:
+        type: string
+        default: "https://github.com/magma/magma.git"
+      MAGMA_BRANCH:
+        type: string
+        default: master
 
 permissions:
   id-token: write  # required for OIDC auth to AWS
@@ -27,4 +34,8 @@ jobs:
           chmod go-rwx ~/.ssh/id_rsa
       - name: Run the shell script to build on graviton
         run: |
+          export MAGMA_REPO_URL=${{ inputs.MAGMA_REPO_URL }}
+          echo $MAGMA_REPO_URL
+          export MAGMA_BRANCH=${{ inputs.MAGMA_BRANCH }}
+          echo $MAGMA_BRANCH
           lte/gateway/deploy/arm_build.sh

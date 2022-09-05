@@ -4,20 +4,13 @@ set -euo pipefail
 
 SSH_KEY_FILE=${SSH_KEY_FILE:-~/.ssh/id_rsa}
 MAGMA_BRANCH=${MAGMA_BRANCH:-master}
+MAGMA_REPO_URL=${MAGMA_REPO_URL:-https://github.com/magma/magma.git}
 export AWS_REGION=${AWS_REGION:-us-east-1}
 
 # --- will be configured by launch template github_actions_ec2_instances: ---
 ssh_host_rsa_key="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDOCQ2Tm8BRzQ+iqpBz4HFo6Ua4UWlYUmpIwWdwah3IzV4OUmN29jxcu4W93wS1hk01jmFNR2XNQSqSpfcVlCtsaVT8pd3kcAe7YEw2R0lLbaHPIALRhl/HqicuWKISFB357vSRy+Bqqw/H0MNm1KFwfIgBseL2X5Cjh8Ftn78EDhf8VRCj5Rt2ZF5hAX+eJyHEhX5htCtc5R3k4tRnWYwD2Jy9L+J2nHq6t96XdweKTwFLQaxPHTliXcJ4Ox6ku26g6j3BPc9rXvrfNfCYASeEbKF2rmhZ4cpd3XlXjYceiZAunlqcLSMBqMWdrKX66mJxJphsuZpKlVruJhJUOit4rHLMVb6B1Epd5ewcZjQO7w2XOcGJVGSzUUUkN7Hk4DMFpRzeTnolVXFiaaQg5RRC3ZJLCLtUW1MAKDNyQaUl6Q5y80gAVs/Dipx0l6zRxoONXScikTBbMHOJp9flB8++z8iixN48/L6CPe1EOOcVuU7P5PboKpLJFF1f8s1RZyjSJty6/v/7oy/nm+YJ/1nn7MI69KlyaU/SIOxJYUE7yr0l77sC/4HVhKrgiy/yqeXXNHCXRYoYtafAcGg5gAqRl8tkN0xBL+x8/G19B/k6ULf+iSc3nFgPBUa1NW4uFcCjyWjkhqdnnXYkiat91Mvsr7r+UrRYOVpCzDKS5vTr5w=="
 ssh_port=2345
 # --- end of launch-template settings ---
-
-#echo "Searching for launch template github_actions_ec2_instances"
-#launch_template_id=$(
-#  aws ec2 describe-launch-templates \
-#    --launch-template-names "github_actions_ec2_instances" \
-#      | jq --raw-output '.LaunchTemplates[0].LaunchTemplateId'
-#)
-#echo "Found launch template $launch_template_id"
 
 echo "Searching for AMI ubuntu/images/hvm-ssd/ubuntu-focal-20.04-arm64-server-20220810"
 ami_id=$(
@@ -90,7 +83,7 @@ sudo chmod +x /usr/local/bin/docker-compose
 EOT
 
 echo "Cloning magma repository"
-$ssh_command "git clone --branch $MAGMA_BRANCH --depth 1 https://github.com/magma/magma.git"
+$ssh_command "git clone --branch $MAGMA_BRANCH --depth 1 $MAGMA_REPO_URL"
 
 echo "Building the containers"
 $ssh_command <<EOT
