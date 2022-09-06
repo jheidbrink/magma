@@ -32,6 +32,15 @@ aws ec2 run-instances \
 instance_id=$(jq --raw-output '.Instances[0].InstanceId' < run-instances.json)
 echo "Instance $instance_id launched."
 
+echo "Registering exit trap to terminate instance"
+function terminate_instance() {
+    echo "Sleeping 30 minutes before terminating the instance"
+    sleep 30m
+    echo "Terminating instance $instance_id"
+    aws ec2 terminate-instance --instance-ids "$instance_id"
+}
+trap terminate_instance EXIT
+
 echo "Waiting for association of public IP"
 public_ip=""
 until [[ "$public_ip" =~ [0-9].* ]]  # before a public IP is associated, it will be "" or "null"
