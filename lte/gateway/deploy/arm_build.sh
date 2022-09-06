@@ -75,9 +75,7 @@ sudo apt update
 sudo apt install --assume-yes --no-install-recommends \
   docker.io \
   git \
-  apt-transport-https \
   curl \
-  gnupg \
   jq
 EOT
 
@@ -100,3 +98,4 @@ cd magma/lte/gateway/docker
 export IMAGE_VERSION=$(git rev-parse HEAD)
 docker-compose build --build-arg CPU_ARCH=aarch64 --build-arg DEB_PORT=arm64
 EOT
+
