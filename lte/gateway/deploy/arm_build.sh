@@ -34,8 +34,11 @@ echo "Instance $instance_id launched."
 
 echo "Registering exit trap to terminate instance"
 function terminate_instance() {
-    echo "Sleeping 30 minutes before terminating the instance"
-    sleep 30m
+    if [[ -n ${SLEEP_MINUTES_BEFORE_TERMINATE:-} ]]
+    then
+        echo "Sleeping ${SLEEP_MINUTES_BEFORE_TERMINATE} minutes before terminating the instance"
+        sleep "${SLEEP_MINUTES_BEFORE_TERMINATE}m"
+    fi
     echo "Terminating instance $instance_id"
     aws ec2 terminate-instance --instance-ids "$instance_id"
 }
