@@ -23,7 +23,7 @@ echo "Found AMI $ami_id"
 echo "Launching instance"
 aws ec2 run-instances \
     --launch-template LaunchTemplateName="github_actions_ec2_instances" \
-    --instance-type t4g.medium \
+    --instance-type m6gd.2xlarge \
     --image-id "$ami_id" \
     --ebs-optimized \
     --block-device-mapping '[ { "DeviceName": "/dev/sda1", "Ebs": { "VolumeSize": 50 } } ]' \
