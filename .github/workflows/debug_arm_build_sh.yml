@@ -42,4 +42,7 @@ jobs:
           echo $MAGMA_REPO_URL
           export MAGMA_BRANCH=${{ inputs.MAGMA_BRANCH }}
           echo $MAGMA_BRANCH
+          export DOCKER_REGISTRY_URL=agw-test.artifactory.magmacore.org
+          export DOCKER_REGISTRY_USERNAME="${{ secrets.DOCKER_USERNAME }}"
+          export DOCKER_REGISTRY_PASSWORD="${{ secrets.DOCKER_PASSWORD }}"
           lte/gateway/deploy/arm_build.sh
