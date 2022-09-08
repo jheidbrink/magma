@@ -138,11 +138,15 @@ cd magma
 git_full_sha=\$(git rev-parse HEAD)
 git_sha=\${git_full_sha:0:8}
 docker image tag agw-gateway_c "${DOCKER_REGISTRY_URL}/agw_gateway_c_arm:\${git_sha}"
+docker image tag agw-gateway_c "${DOCKER_REGISTRY_URL}/agw_gateway_c_arm:latest"
 docker image tag agw-gateway_python "${DOCKER_REGISTRY_URL}/agw_gateway_python_arm:\${git_sha}"
+docker image tag agw-gateway_python "${DOCKER_REGISTRY_URL}/agw_gateway_python_arm:latest"
 echo "After tagging, we have these images:"
 docker image ls
 echo "Pushing agw_gateway_c_arm:\${git_sha}"
 docker image push "${DOCKER_REGISTRY_URL}/agw_gateway_c_arm:\${git_sha}"
+docker image push "${DOCKER_REGISTRY_URL}/agw_gateway_c_arm:latest"
 echo "Pushing agw_gateway_python_arm:\${git_sha}"
 docker image push "${DOCKER_REGISTRY_URL}/agw_gateway_python_arm:\${git_sha}"
+docker image push "${DOCKER_REGISTRY_URL}/agw_gateway_python_arm:latest"
 EOT
