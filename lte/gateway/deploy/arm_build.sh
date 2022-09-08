@@ -113,7 +113,7 @@ $ssh_command "git clone --branch $MAGMA_BRANCH --depth 1 $MAGMA_REPO_URL"
 
 
 echo "Pulling from $DOCKER_REGISTRY_URL to speed up the build"
-$ssh_command <<"EOT"
+$ssh_command <<EOT
 docker login \
     --username="$DOCKER_REGISTRY_USERNAME" \
     --password="$DOCKER_REGISTRY_PASSWORD" \
@@ -123,24 +123,26 @@ docker pull "${DOCKER_REGISTRY_URL}/agw_gateway_python_arm:latest" || echo "Igno
 EOT
 
 echo "Building the containers"
-$ssh_command <<"EOT"
+$ssh_command <<EOT
 cd magma/lte/gateway/docker
-export IMAGE_VERSION=$(git rev-parse HEAD)
 docker-compose build --build-arg CPU_ARCH=aarch64 --build-arg DEB_PORT=arm64
 EOT
 
 echo "Tagging and pushing the images"
-$ssh_command <<"EOT"
+$ssh_command <<EOT
 docker login \
     --username="$DOCKER_REGISTRY_USERNAME" \
     --password="$DOCKER_REGISTRY_PASSWORD" \
     "$DOCKER_REGISTRY_URL"
 cd magma
-git_full_sha=$(git rev-parse HEAD)
-git_sha=${git_full_sha:0:8}
-docker image tag agw-gateway_c "${DOCKER_REGISTRY_URL}/agw_gateway_c_arm:${git_sha}"
-docker image push "${DOCKER_REGISTRY_URL}/agw_gateway_c_arm:${git_sha}"
-
-docker image tag agw-gateway_python "${DOCKER_REGISTRY_URL}/agw_gateway_python_arm:${git_sha}"
-docker image push "${DOCKER_REGISTRY_URL}/agw_gateway_python_arm:${git_sha}"
+git_full_sha=\$(git rev-parse HEAD)
+git_sha=\${git_full_sha:0:8}
+docker image tag agw-gateway_c "${DOCKER_REGISTRY_URL}/agw_gateway_c_arm:\${git_sha}"
+docker image tag agw-gateway_python "${DOCKER_REGISTRY_URL}/agw_gateway_python_arm:\${git_sha}"
+echo "After tagging, we have these images:"
+docker image ls
+echo "Pushing agw_gateway_c_arm:\${git_sha}"
+docker image push "${DOCKER_REGISTRY_URL}/agw_gateway_c_arm:\${git_sha}"
+echo "Pushing agw_gateway_python_arm:\${git_sha}"
+docker image push "${DOCKER_REGISTRY_URL}/agw_gateway_python_arm:\${git_sha}"
 EOT
