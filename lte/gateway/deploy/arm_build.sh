@@ -56,7 +56,7 @@ function terminate_instance() {
         sleep "${SLEEP_MINUTES_BEFORE_TERMINATE}m"
     fi
     echo "Terminating instance $instance_id"
-    aws ec2 terminate-instance --instance-ids "$instance_id"
+    aws ec2 terminate-instances --instance-ids "$instance_id"
 }
 trap terminate_instance EXIT
 
