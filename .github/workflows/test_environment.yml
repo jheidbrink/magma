@@ -1,0 +1,19 @@
+name: Test Environment
+on:
+  workflow_dispatch:
+jobs:
+  test-upterm:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Write something to GITHUB_ENV
+      run: |
+        echo foo=first >> $GITHUB_ENV
+        echo foo=second >> $GITHUB_ENV
+        echo "Showing environment"
+        env
+        echo ""
+        echo "Foo is $foo"
+    - name: Another step
+      run: |
+        echo "Foo is $foo"
+        env
