@@ -112,16 +112,6 @@ echo "Cloning magma repository ${MAGMA_REPO_URL}:${MAGMA_BRANCH}"
 $ssh_command "git clone --branch $MAGMA_BRANCH --depth 1 $MAGMA_REPO_URL"
 
 
-echo "Pulling from $DOCKER_REGISTRY_URL to speed up the build"
-$ssh_command <<EOT
-docker login \
-    --username="$DOCKER_REGISTRY_USERNAME" \
-    --password="$DOCKER_REGISTRY_PASSWORD" \
-    "$DOCKER_REGISTRY_URL"
-docker pull "${DOCKER_REGISTRY_URL}/agw_gateway_c_arm:latest" || echo "Ignoring failed docker pull of ${DOCKER_REGISTRY_URL}/agw_gateway_c_arm:latest"
-docker pull "${DOCKER_REGISTRY_URL}/agw_gateway_python_arm:latest" || echo "Ignoring failed docker pull of ${DOCKER_REGISTRY_URL}/agw_gateway_python_arm:latest"
-EOT
-
 echo "Building the containers"
 $ssh_command <<EOT
 cd magma/lte/gateway/docker
