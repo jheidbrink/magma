@@ -1,0 +1,9 @@
+name: Test Upterm
+on:
+  workflow_dispatch:
+jobs:
+  test-upterm:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Try to install tmux
+      run: "apt-get install tmux"
