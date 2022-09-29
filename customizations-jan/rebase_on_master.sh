@@ -17,5 +17,5 @@ git switch --force-create tmp_rebase
 
 git add -u
 git commit -m "local (auto): Replace workflow triggers by workflow_dispatch"
-git rebase tmp_rebase local
+git rebase tmp_rebase master
 git branch --delete tmp_rebase
