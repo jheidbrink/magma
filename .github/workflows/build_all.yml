@@ -13,6 +13,7 @@ name: Magma Build & Publish
 
 on:
   workflow_dispatch: null
+
 jobs:
   build_publish_helm_charts:
     if: github.repository_owner == 'magma'
