@@ -497,23 +497,6 @@
     remote_src: yes
   when: full_provision
 
-- name: Extend sda2
-  community.general.parted:
-    device: /dev/sda
-    number: 2
-    part_end: "100%"
-    resize: true
-    state: present
-  when: full_provision
-
-- name: Extend sda5
-  community.general.parted:
-    device: /dev/sda
-    number: 5
-    part_end: "100%"
-    resize: true
-    state: present
-  when: full_provision
 
 - name: Extend lvm volumes
   become: yes
