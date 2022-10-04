@@ -498,11 +498,3 @@
   when: full_provision
 
 
-- name: Extend lvm volumes
-  become: yes
-  block:
-    - shell: pvresize /dev/sda5
-    - shell: lvextend -l +100%FREE /dev/mapper/vgmagma--dev-root
-      ignore_errors: yes
-    - shell: resize2fs /dev/mapper/vgmagma--dev-root
-  when: full_provision
