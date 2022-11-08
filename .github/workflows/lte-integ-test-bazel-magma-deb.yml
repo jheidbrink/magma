@@ -81,6 +81,11 @@ jobs:
         run: |
           docker system prune -f -a --volumes
 
+    - name: Setup upterm session
+      uses: lhotari/action-upterm@v1
+      with:
+        limit-access-to-actor: true
+
       - name: Run the integ test
         env:
           MAGMA_DEV_CPUS: 3
