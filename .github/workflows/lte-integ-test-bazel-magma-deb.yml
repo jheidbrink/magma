@@ -13,10 +13,6 @@ name: AGW Build & Test LTE Integration With Bazel Debian Build
 
 on:
   workflow_dispatch: null
-  push:
-    branches:
-      - master
-      - 'v1.*'
 
 env:
   BAZEL_BASE_IMAGE: "ghcr.io/magma/magma/bazel-base:latest"
