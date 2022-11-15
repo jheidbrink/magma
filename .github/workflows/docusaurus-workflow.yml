@@ -12,9 +12,7 @@
 name: Docs Build & Deploy
 
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
 jobs:
   docusaurus-build-and-deploy:
     runs-on: ubuntu-latest

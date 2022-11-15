@@ -11,11 +11,7 @@
 
 name: Magma Publish Artifacts
 on:
-  workflow_run:
-    workflows:
-      - build-all
-    types:
-      - completed
+  workflow_dispatch:
 # Replace registries with new test registries reserved for PR builds
 jobs:
   deploy:

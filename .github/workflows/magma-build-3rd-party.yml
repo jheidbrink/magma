@@ -11,23 +11,6 @@
 
 name: Magma Build & Publish 3rd Party Dependencies
 on:
-  push:
-    branches:
-      - master
-      - 'v1.*'
-    paths:
-      - third_party/**
-      - .github/workflows/magma-build-3rd-party.yml
-  pull_request:
-    types: [ opened, reopened, synchronize ]
-    branches:
-      - master
-      - 'v1.*'
-    paths:
-      - third_party/**
-      - .github/workflows/magma-build-3rd-party.yml
-  schedule:
-    - cron: 0 4 * * 0
   workflow_dispatch:
     inputs:
       production:

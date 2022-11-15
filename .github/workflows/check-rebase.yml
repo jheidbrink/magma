@@ -12,10 +12,7 @@
 name: PR Check Rebase
 
 on:
-  pull_request:
-    branches:
-      - master
-      - 'v1.*'
+  workflow_dispatch:
 
 jobs:
   checkRebase:

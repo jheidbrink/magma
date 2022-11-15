@@ -11,8 +11,7 @@
 
 name: PR Check DCO
 on:
-  pull_request:
-    types: [ opened, reopened, synchronize ]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}

@@ -11,13 +11,7 @@
 
 name: PR Generate Comment On Workflow Failure
 on:
-  workflow_run:
-    workflows:
-      - dco-check
-      - python-workflow
-      - docs-workflow
-    types:
-      - completed
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.event.workflow.name }}

@@ -13,10 +13,6 @@ name: AGW Build & Test LTE Integration With Make Dev Build
 
 on:
   workflow_dispatch: null
-  push:
-    branches:
-      - master
-      - 'v1.*'
 
 jobs:
   lte-integ-test:

@@ -11,26 +11,7 @@
 
 name: Magma Build Docker Image Bazel Base & DevContainer
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - .devcontainer/bazel-base/Dockerfile
-      - .devcontainer/Dockerfile
-      - .github/workflows/docker-builder-devcontainer.yml
-      - .github/workflows/composite/**
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-    paths:
-      - .devcontainer/bazel-base/Dockerfile
-      - .devcontainer/Dockerfile
-      - .github/workflows/docker-builder-devcontainer.yml
-      - .github/workflows/composite/**
-  schedule:
-    - cron: '13 3 * * *'
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io

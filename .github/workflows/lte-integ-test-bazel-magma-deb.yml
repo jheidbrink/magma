@@ -13,8 +13,6 @@ name: AGW Build & Test LTE Integration With Bazel Debian Build
 
 on:
   workflow_dispatch: null
-  repository_dispatch:
-    types: [magma-debian-artifact]
 
 jobs:
   lte-integ-test-bazel-magma-deb:

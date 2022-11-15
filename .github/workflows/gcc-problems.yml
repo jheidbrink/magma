@@ -21,10 +21,7 @@
 
 name: AGW Generate GCC Warnings & Errors
 on:
-  push:
-    branches:
-      - master
-      - 'v1.*'
+  workflow_dispatch:
 env:
   BAZEL_BASE_IMAGE: "ghcr.io/magma/magma/bazel-base:latest"
   # see GH14041

@@ -11,15 +11,7 @@
 
 name: PR Generate Unit Test Results
 on:
-  workflow_run:
-    workflows:
-      - cloud-workflow
-      - feg-workflow
-      - golang-build-test
-      - nms-workflow
-      - dp-workflow
-    types:
-      - completed
+  workflow_dispatch:
 
 jobs:
   skip_check:
