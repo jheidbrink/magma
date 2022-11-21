@@ -18,7 +18,7 @@ ARG CPU_ARCH=x86_64
 ARG DEB_PORT=amd64
 ARG OS_DIST=ubuntu
 ARG OS_RELEASE=focal
-ARG EXTRA_REPO=https://artifactory.magmacore.org/artifactory/debian
+ARG EXTRA_REPO=https://linuxfoundation.jfrog.io/artifactory/magma-packages
 
 FROM $OS_DIST:$OS_RELEASE AS builder
 ARG CPU_ARCH
