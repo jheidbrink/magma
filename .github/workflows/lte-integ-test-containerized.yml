@@ -12,17 +12,52 @@
 name: AGW Test LTE Integration With Make Containerized Build
 
 on:
-  workflow_dispatch: null
+  workflow_dispatch:
+    inputs:
+      digest-c:
+        type: string
+        required: true
+      digest-python:
+        type: string
+        required: true
+      digest-go:
+        type: string
+        required: true
+      registry:
+        type: string
+        required: true
+      test-targets:
+        type: choice
+        options: [ precommit, extended_tests ]
+        required: true
+  workflow_call:
+    inputs:
+      digest-c:
+        type: string
+        required: true
+      digest-python:
+        type: string
+        required: true
+      digest-go:
+        type: string
+        required: true
+      registry:
+        type: string
+        required: true
+      test-targets:
+        type: string  # It seems we cannot define a choice with options in workflow_call
+        required: true
 
 jobs:
   lte-integ-test-containerized:
-    if: (github.event.workflow_run.conclusion == 'success' && github.repository_owner == 'magma') || github.event_name == 'workflow_dispatch'
     runs-on: macos-12
-    strategy:
-      fail-fast: false
-      matrix:
-        test_targets: [ "precommit", "extended_tests" ]
     steps:
+      - name: Show inputs
+        run: |
+          echo Docker image digest C      ${{ inputs.digest-c }}
+          echo Docker image digest Python ${{ inputs.digest-python }}
+          echo Docker image digest Go     ${{ inputs.digest-go }}
+          echo Docker registry            ${{ inputs.registry }}
       - name: Cache magma-dev-box
         uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7 # pin@v3.0.11
         with:
@@ -52,14 +87,21 @@ jobs:
           echo '* 192.168.0.0/16' | sudo tee /etc/vbox/networks.conf
           echo '* 3001::/64' | sudo tee -a /etc/vbox/networks.conf
       - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin@v3.1.0
+      - name: Write image digest to docker-compose.yaml
+        working-directory: lte/gateway/docker
+        run: |
+          sed -i '' s/agw_gateway_c\${OPTIONAL_ARCH_POSTFIX}:\${IMAGE_VERSION}/agw_gateway_c@${{ inputs.digest-c }}/g docker-compose.yaml
+          sed -i '' s/agw_gateway_python\${OPTIONAL_ARCH_POSTFIX}:\${IMAGE_VERSION}/agw_gateway_python@${{ inputs.digest-python }}/g docker-compose.yaml
+          sed -i '' s/gateway_go\${OPTIONAL_ARCH_POSTFIX}:\${IMAGE_VERSION}/gateway_go@${{ inputs.digest-go }}/g docker-compose.yaml
+      - name: Show docker-compose yaml to verify correct docker images hashes
+        run: cat lte/gateway/docker/docker-compose.yaml
       - name: Run the integration test
         env:
-          DOCKER_REGISTRY: docker-ci.artifactory.magmacore.org/
           MAGMA_DEV_CPUS: 3
           MAGMA_DEV_MEMORY_MB: 9216
         working-directory: lte/gateway
-        run: |
-          fab --show=debug --set DOCKER_REGISTRY=${DOCKER_REGISTRY} integ_test_containerized:test_mode=${{ matrix.test_targets }}
+        # the image is directly concatenated to the registry, so we need the slash as delimiter
+        run: fab --show=debug --set DOCKER_REGISTRY=${{ inputs.registry }}/ integ_test_containerized:test_mode=${{ inputs.test-targets }}  # TODO: remove the username (that was for testing)
       - name: Get test results
         if: always()
         working-directory: lte/gateway
