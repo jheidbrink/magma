@@ -1,0 +1,31 @@
+name: Test Inputs
+on:
+  workflow_dispatch:
+    inputs:
+      buuu:
+        type: string
+        required: true
+      ba:
+        type: string
+        default: Baaaaaa
+      nee:
+        type: string
+        default: Nein
+  push: null
+
+env:
+  nee_default: "Neeee"
+  ne: ${{ inputs.nee || 'N' }}
+
+jobs:
+  buuuuu:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ${{ inputs.buuu }}
+        if: github.event_name == 'workflow_dispatch'
+      - run: echo ${{ inputs.ba }}  # This doesn't work on push
+      - run: |
+          nee_input=${{ inputs.nee }}
+          echo ${nee_input:-${{ env.nee_default }}}
+          echo ${{ env.ne }}
+      - run: echo ${{ github.sha[:8] }}
