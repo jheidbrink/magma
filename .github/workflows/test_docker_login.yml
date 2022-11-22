@@ -1,0 +1,14 @@
+name: "Test Docker login"
+
+on:
+  workflow_dispatch:
+    inputs:
+      registry:
+        type: string
+        default: ""
+
+jobs:
+  test-login:
+    runs-on: ubuntu-latest
+    steps:
+      - run: docker login -u ${{ secrets.JFROG_USERNAME }} -p ${{ secrets.JFROG_PASSWORD }} ${{ inputs.registry }}
