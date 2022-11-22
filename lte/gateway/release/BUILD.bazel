@@ -184,6 +184,19 @@ pkg_files(
     prefix = "/usr/local/share/magma/",
 )
 
+genrule(
+    # Convenience "alias" to build all AGW binaries
+    name = "agw_binaries",
+    srcs = [
+        "magma_c_binaries",
+        "magma_go_binaries",
+        "magma_python_scripts",
+        "magma_python_services",
+    ],
+    outs = ["dummy_out.txt"],
+    cmd = "echo hello > $@",
+)
+
 pkg_tar(
     name = "magma_content",
     srcs = [
