@@ -32,10 +32,6 @@ inputs:
   CONTEXT:
     description: Docker context
     default: .
-  PUSH:
-    description: Push to registry?
-    default: true
-    type: boolean
 
 outputs:
   digest:
@@ -55,7 +51,7 @@ runs:
     - name: Login to Docker Hub
       id: docker-login
       # See unresolved bug https://github.com/actions/runner/issues/1483
-      if: ${{ inputs.PUSH == 'true' && inputs.REGISTRY_USERNAME != '' && inputs.REGISTRY_PASSWORD != '' }}
+      if: ${{ inputs.REGISTRY_USERNAME != '' && inputs.REGISTRY_PASSWORD != '' }}
       uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # pin@v2.1.0
       with:
         registry: ${{ inputs.REGISTRY }}
