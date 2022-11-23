@@ -58,6 +58,7 @@ jobs:
           echo Docker image digest Python ${{ inputs.digest-python }}
           echo Docker image digest Go     ${{ inputs.digest-go }}
           echo Docker registry            ${{ inputs.registry }}
+          echo test targets               ${{ inputs.test-targets }}
       - name: Cache magma-dev-box
         uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7 # pin@v3.0.11
         with:
