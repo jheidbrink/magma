@@ -34,12 +34,15 @@ jobs:
       digest-c: ${{ steps.docker-builder-c.outputs.digest }}
       digest-python: ${{ steps.docker-builder-python.outputs.digest }}
       digest-go: ${{ steps.docker-builder-go.outputs.digest }}
-      registry: ${{ env.registry }}  # It seems this must be a job output in order to pass it to the integtest
+      registry: ${{ steps.set-registry-output.registry }}
     runs-on: ubuntu-latest
     steps:
       - run: echo "Registry is ${{ env.registry }}"
 
       - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin@v3.1.0
+
+      - id: set-registry-ouput
+        run: echo registry=$registry >> $GITHUB_OUTPUT
 
       - id: get-short-git-sha
         run: echo sha=${GITHUB_SHA:0:8} >> $GITHUB_OUTPUT
