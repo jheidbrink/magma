@@ -34,7 +34,7 @@ jobs:
       digest-c: ${{ steps.docker-builder-c.outputs.digest }}
       digest-python: ${{ steps.docker-builder-python.outputs.digest }}
       digest-go: ${{ steps.docker-builder-go.outputs.digest }}
-      registry: ${{ steps.set-registry-output.registry }}
+      registry: ${{ steps.set-registry-output.outputs.registry }}
     runs-on: ubuntu-latest
     steps:
       - run: echo "Registry is ${{ env.registry }}"
