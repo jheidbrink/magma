@@ -14,31 +14,37 @@ name: AGW Test LTE Integration With Make Containerized Build
 on:
   workflow_dispatch:
     inputs:
-      digest-c:
+      digest_c:
         type: string
         required: true
-      digest-python:
+      digest_python:
         type: string
         required: true
-      digest-go:
+      digest_go:
         type: string
         required: true
-      test-targets:
+      registry:
+        type: string
+        required: true
+      test_targets:
         type: choice
         options: [ precommit, extended_tests ]
         required: true
   workflow_call:
     inputs:
-      digest-c:
+      digest_c:
         type: string
         required: true
-      digest-python:
+      digest_python:
         type: string
         required: true
-      digest-go:
+      digest_go:
         type: string
         required: true
-      test-targets:
+      registry:
+        type: string
+        required: true
+      test_targets:
         type: string  # It seems we cannot define a choice with options in workflow_call
         required: true
 
@@ -48,10 +54,29 @@ jobs:
     steps:
       - name: Show inputs
         run: |
-          echo Docker image digest C      ${{ inputs.digest-c }}
-          echo Docker image digest Python ${{ inputs.digest-python }}
-          echo Docker image digest Go     ${{ inputs.digest-go }}
-          echo test targets               ${{ inputs.test-targets }}
+          echo Docker image digest C      ${{ inputs.digest_c }}
+          echo Docker image digest Python ${{ inputs.digest_python }}
+          echo Docker image digest Go     ${{ inputs.digest_go }}
+          echo Docker registry            ${{ inputs.registry }}
+          echo test targets               ${{ inputs.test_targets }}
+      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin@v3.1.0
+      - id: set-registry
+        name: Set registry and image_prefix
+        run: |
+          echo ${{ inputs.registry }}
+          echo registry=${{ inputs.registry }} >> $GITHUB_OUTPUT
+          if [ ${{ inputs.registry }} = docker.io ]
+          then
+            echo image_prefix=${{ secrets.JFROG_USERNAME }}/ >> $GITHUB_OUTPUT  # dockerhub image URLs have the form docker.io/<username>/image
+          fi
+      - name: Write image digest to docker-compose.yaml
+        working-directory: lte/gateway/docker
+        run: |
+          sed -i '' "s#image:.*agw_gateway_c.*#image: ${{ inputs.registry }}/${{ steps.set-registry.outputs.image_prefix }}agw_gateway_c@${{ inputs.digest_c }}#" docker-compose.yaml
+          sed -i '' "s#image:.*agw_gateway_python.*#image: ${{ inputs.registry }}/${{ steps.set-registry.outputs.image_prefix }}agw_gateway_python@${{ inputs.digest_python }}#" docker-compose.yaml
+          sed -i '' "s#image:.*agw_gateway_go.*#image: ${{ inputs.registry }}/${{ steps.set-registry.outputs.image_prefix }}agw_gateway_go@${{ inputs.digest_go }}#" docker-compose.yaml
+      - name: Show docker-compose yaml to verify correct docker images hashes
+        run: cat lte/gateway/docker/docker-compose.yaml
       - name: Cache magma-dev-box
         uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7 # pin@v3.0.11
         with:
@@ -80,22 +105,13 @@ jobs:
           sudo mkdir -p /etc/vbox/
           echo '* 192.168.0.0/16' | sudo tee /etc/vbox/networks.conf
           echo '* 3001::/64' | sudo tee -a /etc/vbox/networks.conf
-      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin@v3.1.0
-      - name: Write image digest to docker-compose.yaml
-        working-directory: lte/gateway/docker
-        run: |
-          sed -i '' s/agw_gateway_c\${OPTIONAL_ARCH_POSTFIX}:\${IMAGE_VERSION}/janheidbrinktng\/agw_gateway_c@${{ inputs.digest-c }}/g docker-compose.yaml
-          sed -i '' s/agw_gateway_python\${OPTIONAL_ARCH_POSTFIX}:\${IMAGE_VERSION}/janheidbrinktng\/agw_gateway_python@${{ inputs.digest-python }}/g docker-compose.yaml
-          sed -i '' s/gateway_go\${OPTIONAL_ARCH_POSTFIX}:\${IMAGE_VERSION}/janheidbrinktng\/gateway_go@${{ inputs.digest-go }}/g docker-compose.yaml
-      - name: Show docker-compose yaml to verify correct docker images hashes
-        run: cat lte/gateway/docker/docker-compose.yaml
       - name: Run the integration test
         env:
           MAGMA_DEV_CPUS: 3
           MAGMA_DEV_MEMORY_MB: 9216
         working-directory: lte/gateway
         # the image is directly concatenated to the registry, so we need the slash as delimiter
-        run: fab --show=debug --set DOCKER_REGISTRY=docker.io/ integ_test_containerized:test_mode=${{ inputs.test-targets }}  # TODO: remove the username (that was for testing)
+        run: fab --show=debug --set DOCKER_REGISTRY=${{ inputs.registry }}/ integ_test_containerized:test_mode=${{ inputs.test_targets }}  # TODO: remove the username (that was for testing)
       - name: Get test results
         if: always()
         working-directory: lte/gateway
