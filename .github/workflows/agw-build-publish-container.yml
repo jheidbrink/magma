@@ -145,6 +145,7 @@ jobs:
       digest_go: ${{ needs.build-containers.outputs.digest_go }}
       registry: ${{ needs.build-containers.outputs.registry }}
       test_targets: precommit
+    secrets: inherit
 
   #test-containers-extended:
   #  needs: build-containers
