@@ -65,7 +65,7 @@ jobs:
         with:
           REGISTRY_USERNAME: ${{ secrets.JFROG_USERNAME }}
           REGISTRY_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
-          REGISTRY: ${{ steps.split-registry.outputs.host }}
+          REGISTRY: ${{ env.registry }}
           FILE: lte/gateway/docker/services/c/Dockerfile
           TAGS: ${{ env.registry }}/${{ inputs.image-prefix }}agw_gateway_c:${{ steps.get-short-git-sha.outputs.sha }}
       - run: echo "C container image digest is ${{ steps.docker-builder-c.outputs.digest }}"
@@ -76,7 +76,7 @@ jobs:
         with:
           REGISTRY_USERNAME: ${{ secrets.JFROG_USERNAME }}
           REGISTRY_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
-          REGISTRY: ${{ steps.split-registry.outputs.host }}
+          REGISTRY: ${{ env.registry }}
           FILE: lte/gateway/docker/services/python/Dockerfile
           TAGS: ${{ env.registry }}/${{ inputs.image-prefix }}agw_gateway_python:${{ steps.get-short-git-sha.outputs.sha }}
       - run: echo "Python container image digest is ${{ steps.docker-builder-python.outputs.digest }}"
@@ -87,7 +87,7 @@ jobs:
         with:
           REGISTRY_USERNAME: ${{ secrets.JFROG_USERNAME }}
           REGISTRY_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
-          REGISTRY: ${{ steps.split-registry.outputs.host }}
+          REGISTRY: ${{ env.registry }}
           FILE: feg/gateway/docker/go/Dockerfile
           TAGS: ${{ env.registry }}/${{ inputs.image-prefix }}gateway_go:${{ steps.get-short-git-sha.outputs.sha }}
       - run: echo "Go container image digest is ${{ steps.docker-builder-go.outputs.digest }}"
@@ -104,24 +104,20 @@ jobs:
       - id: get-short-git-sha
         run: echo sha=${GITHUB_SHA:0:8} >> $GITHUB_OUTPUT
 
-      # Takes something like "docker.io/jan" and returns "docker.io"
-      - id: split-registry
-        run: echo host=${registry%%/*} >> $GITHUB_OUTPUT
-
       - uses: ./.github/workflows/composite/docker-builder-agw
         with:
           REGISTRY_USERNAME: ${{ secrets.JFROG_USERNAME }}
           REGISTRY_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
-          REGISTRY: ${{ steps.split-registry.outputs.host }}
-          TAGS: ${{ env.registry }}/ghz_gateway_c:${{ steps.get-short-git-sha.outputs.sha }}
+          REGISTRY: ${{ env.registry }}
+          TAGS: ${{ env.registry }}/${{ inputs.image-prefix }}ghz_gateway_c:${{ steps.get-short-git-sha.outputs.sha }}
           CONTEXT: lte/gateway/docker/ghz
 
       - uses: ./.github/workflows/composite/docker-builder-agw
         with:
           REGISTRY_USERNAME: ${{ secrets.JFROG_USERNAME }}
           REGISTRY_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
-          REGISTRY: ${{ steps.split-registry.outputs.host }}
-          TAGS: ${{ env.registry }}/ghz_gateway_python:${{ steps.get-short-git-sha.outputs.sha }}
+          REGISTRY: ${{ env.registry }}
+          TAGS: ${{ env.registry }}/${{ inputs.image-prefix }}ghz_gateway_python:${{ steps.get-short-git-sha.outputs.sha }}
           CONTEXT: lte/gateway/docker/ghz
 
   verify-outputs:
