@@ -66,7 +66,7 @@ jobs:
           if [ ${{ inputs.registry }} = docker.io ]  # dockerhub image URLs have the form docker.io/<username>/image
           then
             image_prefix=${{ secrets.JFROG_USERNAME }}/
-          else:
+          else
             image_prefix=""
           fi
           sed -i '' 's#image:.*agw_gateway_c.*#image: ${{ inputs.registry }}/${image_prefix}agw_gateway_c@${{ inputs.digest_c }}#' docker-compose.yaml
