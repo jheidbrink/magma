@@ -43,7 +43,7 @@ jobs:
     steps:
       - run: echo "Registry is ${{ env.registry }}"
 
-      - id: set-registry-ouput
+      - id: set-registry-output
         name: Set registry output
         run: |
           echo ${{ env.registry }}
