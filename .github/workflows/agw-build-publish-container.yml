@@ -112,7 +112,7 @@ jobs:
           REGISTRY_USERNAME: ${{ secrets.JFROG_USERNAME }}
           REGISTRY_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
           REGISTRY: ${{ env.registry }}
-          TAGS: ${{ env.registry }}/${{ inputs.image-prefix }}ghz_gateway_c:${{ steps.get-short-git-sha.outputs.sha }}
+          TAGS: ${{ steps.set-registry.outputs.registry }}/${{ steps.set-registry.outputs.image_prefix }}ghz_gateway_c:${{ steps.get-short-git-sha.outputs.sha }}
           CONTEXT: lte/gateway/docker/ghz
 
       - uses: ./.github/workflows/composite/docker-builder-agw
@@ -120,7 +120,7 @@ jobs:
           REGISTRY_USERNAME: ${{ secrets.JFROG_USERNAME }}
           REGISTRY_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
           REGISTRY: ${{ env.registry }}
-          TAGS: ${{ env.registry }}/${{ inputs.image-prefix }}ghz_gateway_python:${{ steps.get-short-git-sha.outputs.sha }}
+          TAGS: ${{ steps.set-registry.outputs.registry }}/${{ steps.set-registry.outputs.image_prefix }}ghz_gateway_python:${{ steps.get-short-git-sha.outputs.sha }}
           CONTEXT: lte/gateway/docker/ghz
 
   verify-outputs:
