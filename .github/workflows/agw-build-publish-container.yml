@@ -44,6 +44,9 @@ jobs:
       - id: set-registry-ouput
         run: echo registry=$registry >> $GITHUB_OUTPUT
 
+      - id: verify registry output
+        run: echo Registry is ${{ steps.set-registry-output.outputs.registry }}
+
       - id: get-short-git-sha
         run: echo sha=${GITHUB_SHA:0:8} >> $GITHUB_OUTPUT
 
