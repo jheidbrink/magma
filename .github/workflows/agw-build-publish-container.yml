@@ -17,9 +17,6 @@ on:
       registry:
         type: string
         description: Overwrite registry (default agw-test.artifactory.magmacore.org).
-      image-prefix:
-        type: string
-        description: "When testing on your fork against Dockerhub, set this to your username followed by slash"
   push:
     branches:
       - master
@@ -37,22 +34,25 @@ jobs:
       digest-c: ${{ steps.docker-builder-c.outputs.digest }}
       digest-python: ${{ steps.docker-builder-python.outputs.digest }}
       digest-go: ${{ steps.docker-builder-go.outputs.digest }}
-      registry: ${{ steps.set-registry-output.outputs.registry }}
-      image-prefix: ${{ steps.set-image-prefix.outputs.prefix }}
+      registry: ${{ steps.set-registry.outputs.registry }}
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Registry is ${{ env.registry }}"
+      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin@v3.1.0
 
-      - id: set-registry-output
-        name: Set registry output
+      - id: set-registry
+        name: Set registry and image_prefix
         run: |
           echo ${{ env.registry }}
           echo registry=${{ env.registry }} >> $GITHUB_OUTPUT
-
-      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin@v3.1.0
+          if [ ${{ env.registry }} = docker.io ]
+          then
+            echo image_prefix=${{ secrets.JFROG_USERNAME }}/ >> $GITHUB_OUTPUT  # dockerhub image URLs have the form docker.io/<username>/image
+          fi
 
       - name: verify registry output
-        run: echo Registry is ${{ steps.set-registry-output.outputs.registry }}
+        run: |
+          echo Registry is ${{ steps.set-registry.outputs.registry }}
+          echo Image prefix is ${{ steps.set-registry.outputs.image_prefix }}
 
       - id: get-short-git-sha
         name: Set short git sha output
@@ -63,15 +63,6 @@ jobs:
       - name: verify git sha output
         run: echo git sha is ${{ steps.get-short-git-sha.outputs.sha }}
 
-      - id: set-image-prefix
-        name: Set image-prefix output
-        run: |
-          echo ${{ inputs.image-prefix }}
-          echo prefix=${{ inputs.image-prefix }} >> $GITHUB_OUTPUT
-
-      - name: verify image prefix output
-        run: echo image-prefix is ${{ steps.set-image-prefix.outputs.image-prefix }}
-
       - uses: ./.github/workflows/composite/docker-builder-agw
         id: docker-builder-c
         with:
@@ -79,7 +70,7 @@ jobs:
           REGISTRY_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
           REGISTRY: ${{ env.registry }}
           FILE: lte/gateway/docker/services/c/Dockerfile
-          TAGS: ${{ env.registry }}/${{ inputs.image-prefix }}agw_gateway_c:${{ steps.get-short-git-sha.outputs.sha }}
+          TAGS: ${{ steps.set-registry.outputs.registry }}/${{ steps.set-registry.outputs.image_prefix }}agw_gateway_c:${{ steps.get-short-git-sha.outputs.sha }}
       - run: echo "C container image digest is ${{ steps.docker-builder-c.outputs.digest }}"
       - run: echo "docker-builder-c conclusion = ${{ steps.docker-builder-c.conclusion }}"
 
@@ -90,7 +81,7 @@ jobs:
           REGISTRY_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
           REGISTRY: ${{ env.registry }}
           FILE: lte/gateway/docker/services/python/Dockerfile
-          TAGS: ${{ env.registry }}/${{ inputs.image-prefix }}agw_gateway_python:${{ steps.get-short-git-sha.outputs.sha }}
+          TAGS: ${{ steps.set-registry.outputs.registry }}/${{ steps.set-registry.outputs.image_prefix }}agw_gateway_python:${{ steps.get-short-git-sha.outputs.sha }}
       - run: echo "Python container image digest is ${{ steps.docker-builder-python.outputs.digest }}"
       - run: echo "docker-builder-python conclusion = ${{ steps.docker-builder-python.conclusion }}"
 
@@ -101,7 +92,7 @@ jobs:
           REGISTRY_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
           REGISTRY: ${{ env.registry }}
           FILE: feg/gateway/docker/go/Dockerfile
-          TAGS: ${{ env.registry }}/${{ inputs.image-prefix }}gateway_go:${{ steps.get-short-git-sha.outputs.sha }}
+          TAGS: ${{ steps.set-registry.outputs.registry }}/${{ steps.set-registry.outputs.image_prefix }}agw_gateway_go:${{ steps.get-short-git-sha.outputs.sha }}
       - run: echo "Go container image digest is ${{ steps.docker-builder-go.outputs.digest }}"
       - run: echo "docker-builder-go conclusion = ${{ steps.docker-builder-go.conclusion }}"
 
@@ -141,7 +132,6 @@ jobs:
           echo digest-python ${{ needs.build-containers.outputs.digest-python }}
           echo digest-go ${{ needs.build-containers.outputs.digest-go }}
           echo registry ${{ needs.build-containers.outputs.registry }}
-          echo image-prefix ${{ needs.build-containers.outputs.image-prefix }}
           echo test-targets precommit
 
   test-containers-precommit:
@@ -155,7 +145,6 @@ jobs:
       digest-python: ${{ needs.build-containers.outputs.digest-python }}
       digest-go: ${{ needs.build-containers.outputs.digest-go }}
       registry: ${{ needs.build-containers.outputs.registry }}
-      image-prefix: ${{ needs.build-containers.outputs.image-prefix }}
       test-targets: precommit
 
   test-containers-extended:
@@ -169,5 +158,4 @@ jobs:
       digest-python: ${{ needs.build-containers.outputs.digest-python }}
       digest-go: ${{ needs.build-containers.outputs.digest-go }}
       registry: ${{ needs.build-containers.outputs.registry }}
-      image-prefix: ${{ needs.build-containers.outputs.image-prefix }}
       test-targets: extended
