@@ -28,7 +28,7 @@ on:
     types: [ opened, reopened, synchronize ]
 
 env:
-  registry: ${{ inputs.registry || 'agw-test.artifactory.magmacore.org' }}
+  registry: ${{ inputs.registry || 'docker.io' }}
 
 jobs:
 
@@ -56,7 +56,7 @@ jobs:
           REGISTRY_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
           REGISTRY: ${{ env.registry }}
           FILE: lte/gateway/docker/services/c/Dockerfile
-          TAGS: ${{ env.registry }}/${{ inputs.image-prefix }}agw_gateway_c:${{ steps.get-short-git-sha.outputs.sha }}
+          TAGS: ${{ env.registry }}/janheidbrinktng/agw_gateway_c:${{ steps.get-short-git-sha.outputs.sha }}
       - run: echo "C container image digest is ${{ steps.docker-builder-c.outputs.digest }}"
       - run: echo "docker-builder-c conclusion = ${{ steps.docker-builder-c.conclusion }}"
 
@@ -67,7 +67,7 @@ jobs:
           REGISTRY_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
           REGISTRY: ${{ env.registry }}
           FILE: lte/gateway/docker/services/python/Dockerfile
-          TAGS: ${{ env.registry }}/${{ inputs.image-prefix }}agw_gateway_python:${{ steps.get-short-git-sha.outputs.sha }}
+          TAGS: ${{ env.registry }}/janheidbrinktng/agw_gateway_python:${{ steps.get-short-git-sha.outputs.sha }}
       - run: echo "Python container image digest is ${{ steps.docker-builder-python.outputs.digest }}"
       - run: echo "docker-builder-python conclusion = ${{ steps.docker-builder-python.conclusion }}"
 
@@ -78,7 +78,7 @@ jobs:
           REGISTRY_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
           REGISTRY: ${{ env.registry }}
           FILE: feg/gateway/docker/go/Dockerfile
-          TAGS: ${{ env.registry }}/${{ inputs.image-prefix }}gateway_go:${{ steps.get-short-git-sha.outputs.sha }}
+          TAGS: ${{ env.registry }}/janheidbrinktng/gateway_go:${{ steps.get-short-git-sha.outputs.sha }}
       - run: echo "Go container image digest is ${{ steps.docker-builder-go.outputs.digest }}"
       - run: echo "docker-builder-go conclusion = ${{ steps.docker-builder-go.conclusion }}"
 
@@ -98,7 +98,7 @@ jobs:
           REGISTRY_USERNAME: ${{ secrets.JFROG_USERNAME }}
           REGISTRY_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
           REGISTRY: ${{ env.registry }}
-          TAGS: ${{ env.registry }}/${{ inputs.image-prefix }}ghz_gateway_c:${{ steps.get-short-git-sha.outputs.sha }}
+          TAGS: ${{ env.registry }}/janheidbrinktng/ghz_gateway_c:${{ steps.get-short-git-sha.outputs.sha }}
           CONTEXT: lte/gateway/docker/ghz
 
       - uses: ./.github/workflows/composite/docker-builder-agw
@@ -106,7 +106,7 @@ jobs:
           REGISTRY_USERNAME: ${{ secrets.JFROG_USERNAME }}
           REGISTRY_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
           REGISTRY: ${{ env.registry }}
-          TAGS: ${{ env.registry }}/${{ inputs.image-prefix }}ghz_gateway_python:${{ steps.get-short-git-sha.outputs.sha }}
+          TAGS: ${{ env.registry }}/janheidbrinktng/ghz_gateway_python:${{ steps.get-short-git-sha.outputs.sha }}
           CONTEXT: lte/gateway/docker/ghz
 
   verify-outputs:
