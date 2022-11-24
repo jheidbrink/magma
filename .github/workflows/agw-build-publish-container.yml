@@ -37,40 +37,18 @@ jobs:
       digest-c: ${{ steps.docker-builder-c.outputs.digest }}
       digest-python: ${{ steps.docker-builder-python.outputs.digest }}
       digest-go: ${{ steps.docker-builder-go.outputs.digest }}
-      registry: ${{ steps.set-registry-output.outputs.registry }}
-      image-prefix: ${{ steps.set-image-prefix.outputs.prefix }}
     runs-on: ubuntu-latest
     steps:
       - run: echo "Registry is ${{ env.registry }}"
 
       - id: set-registry-ouput
-        name: Set registry output
-        run: |
-          echo ${{ env.registry }}
-          echo registry=${{ env.registry }} >> $GITHUB_OUTPUT
-
       - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin@v3.1.0
-
-      - name: verify registry output
-        run: echo Registry is ${{ steps.set-registry-output.outputs.registry }}
 
       - id: get-short-git-sha
         name: Set short git sha output
         run: |
           echo ${GITHUB_SHA:0:8}
           echo sha=${GITHUB_SHA:0:8} >> $GITHUB_OUTPUT
-
-      - name: verify git sha output
-        run: echo git sha is ${{ steps.get-short-git-sha.outputs.sha }}
-
-      - id: set-image-prefix
-        name: Set image-prefix output
-        run: |
-          echo ${{ inputs.image-prefix }}
-          echo prefix=${{ inputs.image-prefix }} >> $GITHUB_OUTPUT
-
-      - name: verify image prefix output
-        run: echo image-prefix is ${{ steps.set-image-prefix.outputs.image-prefix }}
 
       - uses: ./.github/workflows/composite/docker-builder-agw
         id: docker-builder-c
@@ -140,8 +118,6 @@ jobs:
           echo digest-c ${{ needs.build-containers.outputs.digest-c }}
           echo digest-python ${{ needs.build-containers.outputs.digest-python }}
           echo digest-go ${{ needs.build-containers.outputs.digest-go }}
-          echo registry ${{ needs.build-containers.outputs.registry }}
-          echo image-prefix ${{ needs.build-containers.outputs.image-prefix }}
           echo test-targets precommit
 
   test-containers-precommit:
@@ -154,8 +130,6 @@ jobs:
       digest-c: ${{ needs.build-containers.outputs.digest-c }}
       digest-python: ${{ needs.build-containers.outputs.digest-python }}
       digest-go: ${{ needs.build-containers.outputs.digest-go }}
-      registry: ${{ needs.build-containers.outputs.registry }}
-      image-prefix: ${{ needs.build-containers.outputs.image-prefix }}
       test-targets: precommit
 
   test-containers-extended:
@@ -168,6 +142,4 @@ jobs:
       digest-c: ${{ needs.build-containers.outputs.digest-c }}
       digest-python: ${{ needs.build-containers.outputs.digest-python }}
       digest-go: ${{ needs.build-containers.outputs.digest-go }}
-      registry: ${{ needs.build-containers.outputs.registry }}
-      image-prefix: ${{ needs.build-containers.outputs.image-prefix }}
       test-targets: extended
