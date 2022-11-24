@@ -62,9 +62,9 @@ jobs:
       - id: set-registry
         name: Set registry and image_prefix
         run: |
-          echo ${{ env.registry }}
-          echo registry=${{ env.registry }} >> $GITHUB_OUTPUT
-          if [ ${{ env.registry }} = docker.io ]  # dockerhub image URLs have the form docker.io/<username>/image
+          echo ${{ inputs.registry }}
+          echo registry=${{ inputs.registry }} >> $GITHUB_OUTPUT
+          if [ ${{ inputs.registry }} = docker.io ]  # dockerhub image URLs have the form docker.io/<username>/image
           then
             echo image_prefix=${{ secrets.JFROG_USERNAME }}/ >> $GITHUB_OUTPUT
           fi
