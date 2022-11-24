@@ -121,6 +121,18 @@ jobs:
           TAGS: ${{ env.registry }}/ghz_gateway_python:${{ steps.get-short-git-sha.outputs.sha }}
           CONTEXT: lte/gateway/docker/ghz
 
+  verify-outputs:
+    needs: build-containers
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo digest-c ${{ needs.build-containers.outputs.digest-c }}
+          echo digest-python ${{ needs.build-containers.outputs.digest-python }}
+          echo digest-go ${{ needs.build-containers.outputs.digest-go }}
+          echo registry ${{ needs.build-containers.outputs.registry }}
+          echo image-prefix ${{ needs.build-containers.outputs.image-prefix }}
+          echo test-targets precommit
+
   test-containers-precommit:
     needs: build-containers
     # We only want to trigger the tests if the build-containers job uploaded the images.
