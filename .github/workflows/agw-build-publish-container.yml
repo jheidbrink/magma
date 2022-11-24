@@ -31,9 +31,9 @@ jobs:
 
   build-containers:
     outputs:
-      digest-c: ${{ steps.docker-builder-c.outputs.digest }}
-      digest-python: ${{ steps.docker-builder-python.outputs.digest }}
-      digest-go: ${{ steps.docker-builder-go.outputs.digest }}
+      digest_c: ${{ steps.docker-builder-c.outputs.digest }}
+      digest_python: ${{ steps.docker-builder-python.outputs.digest }}
+      digest_go: ${{ steps.docker-builder-go.outputs.digest }}
       registry: ${{ steps.set-registry.outputs.registry }}
     runs-on: ubuntu-latest
     steps:
@@ -128,11 +128,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo digest-c ${{ needs.build-containers.outputs.digest-c }}
-          echo digest-python ${{ needs.build-containers.outputs.digest-python }}
-          echo digest-go ${{ needs.build-containers.outputs.digest-go }}
+          echo digest_c ${{ needs.build-containers.outputs.digest_c }}
+          echo digest_python ${{ needs.build-containers.outputs.digest_python }}
+          echo digest_go ${{ needs.build-containers.outputs.digest_go }}
           echo registry ${{ needs.build-containers.outputs.registry }}
-          echo test-targets precommit
 
   test-containers-precommit:
     needs: build-containers
@@ -141,11 +140,11 @@ jobs:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/lte-integ-test-containerized.yml
     with:
-      digest-c: ${{ needs.build-containers.outputs.digest-c }}
-      digest-python: ${{ needs.build-containers.outputs.digest-python }}
-      digest-go: ${{ needs.build-containers.outputs.digest-go }}
+      digest_c: ${{ needs.build-containers.outputs.digest_c }}
+      digest_python: ${{ needs.build-containers.outputs.digest_python }}
+      digest_go: ${{ needs.build-containers.outputs.digest_go }}
       registry: ${{ needs.build-containers.outputs.registry }}
-      test-targets: precommit
+      test_targets: precommit
 
   test-containers-extended:
     needs: build-containers
@@ -154,8 +153,8 @@ jobs:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/lte-integ-test-containerized.yml
     with:
-      digest-c: ${{ needs.build-containers.outputs.digest-c }}
-      digest-python: ${{ needs.build-containers.outputs.digest-python }}
-      digest-go: ${{ needs.build-containers.outputs.digest-go }}
+      digest_c: ${{ needs.build-containers.outputs.digest_c }}
+      digest_python: ${{ needs.build-containers.outputs.digest_python }}
+      digest_go: ${{ needs.build-containers.outputs.digest_go }}
       registry: ${{ needs.build-containers.outputs.registry }}
-      test-targets: extended
+      test_targets: extended

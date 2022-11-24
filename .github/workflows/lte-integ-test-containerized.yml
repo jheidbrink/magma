@@ -14,37 +14,37 @@ name: AGW Test LTE Integration With Make Containerized Build
 on:
   workflow_dispatch:
     inputs:
-      digest-c:
+      digest_c:
         type: string
         required: true
-      digest-python:
+      digest_python:
         type: string
         required: true
-      digest-go:
+      digest_go:
         type: string
         required: true
       registry:
         type: string
         required: true
-      test-targets:
+      test_targets:
         type: choice
         options: [ precommit, extended_tests ]
         required: true
   workflow_call:
     inputs:
-      digest-c:
+      digest_c:
         type: string
         required: true
-      digest-python:
+      digest_python:
         type: string
         required: true
-      digest-go:
+      digest_go:
         type: string
         required: true
       registry:
         type: string
         required: true
-      test-targets:
+      test_targets:
         type: string  # It seems we cannot define a choice with options in workflow_call
         required: true
 
@@ -54,11 +54,11 @@ jobs:
     steps:
       - name: Show inputs
         run: |
-          echo Docker image digest C      ${{ inputs.digest-c }}
-          echo Docker image digest Python ${{ inputs.digest-python }}
-          echo Docker image digest Go     ${{ inputs.digest-go }}
+          echo Docker image digest C      ${{ inputs.digest_c }}
+          echo Docker image digest Python ${{ inputs.digest_python }}
+          echo Docker image digest Go     ${{ inputs.digest_go }}
           echo Docker registry            ${{ inputs.registry }}
-          echo test targets               ${{ inputs.test-targets }}
+          echo test targets               ${{ inputs.test_targets }}
       - id: set-registry
         name: Set registry and image_prefix
         run: |
@@ -100,9 +100,9 @@ jobs:
       - name: Write image digest to docker-compose.yaml
         working-directory: lte/gateway/docker
         run: |
-          sed -i '' s#image:.*agw_gateway_c.*#image: ${{ steps.set-registry.outputs.registry }}/${{ steps.set-registry.outputs.image-prefix }}agw_gateway_c@${{ inputs.digest-c }}# docker-compose.yaml
-          sed -i '' s#image:.*agw_gateway_python.*#image: ${{ steps.set-registry.outputs.registry }}/${{ steps.set-registry.outputs.image-prefix }}agw_gateway_python@${{ inputs.digest-python }}# docker-compose.yaml
-          sed -i '' s#image:.*agw_gateway_go.*#image: ${{ steps.set-registry.outputs.registry }}/${{ steps.set-registry.outputs.image-prefix }}agw_gateway_go@${{ inputs.digest-go }}# docker-compose.yaml
+          sed -i '' s#image:.*agw_gateway_c.*#image: ${{ steps.set-registry.outputs.registry }}/${{ steps.set-registry.outputs.image-prefix }}agw_gateway_c@${{ inputs.digest_c }}# docker-compose.yaml
+          sed -i '' s#image:.*agw_gateway_python.*#image: ${{ steps.set-registry.outputs.registry }}/${{ steps.set-registry.outputs.image-prefix }}agw_gateway_python@${{ inputs.digest_python }}# docker-compose.yaml
+          sed -i '' s#image:.*agw_gateway_go.*#image: ${{ steps.set-registry.outputs.registry }}/${{ steps.set-registry.outputs.image-prefix }}agw_gateway_go@${{ inputs.digest_go }}# docker-compose.yaml
       - name: Show docker-compose yaml to verify correct docker images hashes
         run: cat lte/gateway/docker/docker-compose.yaml
       - name: Run the integration test
@@ -111,7 +111,7 @@ jobs:
           MAGMA_DEV_MEMORY_MB: 9216
         working-directory: lte/gateway
         # the image is directly concatenated to the registry, so we need the slash as delimiter
-        run: fab --show=debug --set DOCKER_REGISTRY=${{ inputs.registry }}/ integ_test_containerized:test_mode=${{ inputs.test-targets }}  # TODO: remove the username (that was for testing)
+        run: fab --show=debug --set DOCKER_REGISTRY=${{ inputs.registry }}/ integ_test_containerized:test_mode=${{ inputs.test_targets }}  # TODO: remove the username (that was for testing)
       - name: Get test results
         if: always()
         working-directory: lte/gateway
