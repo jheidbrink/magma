@@ -13,9 +13,6 @@ name: AGW Build & Test LTE Integration With Bazel Dev Build
 
 on:
   workflow_dispatch: null
-  push:
-    branches:
-      - master
 
 env:
   CACHE_KEY: magma-dev-vm

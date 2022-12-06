@@ -11,15 +11,7 @@
 
 name: PR Generate Unit Test Results
 on:
-  workflow_run:
-    workflows:
-      - Orc8r Lint & Test
-      - FeG Lint & Test
-      - AGW Build & Test Experimental Go Code
-      - NMS Lint & Test
-      - DP Lint & Test
-    types:
-      - completed
+  workflow_dispatch:
 
 jobs:
   skip_check:

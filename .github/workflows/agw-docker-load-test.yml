@@ -12,14 +12,7 @@
 name: AGW Test Load Docker AMI
 
 on:
-  workflow_run:
-    workflows:
-      - Magma Build & Publish
-    branches:
-      - master
-      - 'v1.*'
-    types:
-      - completed
+  workflow_dispatch:
 
 concurrency: ${{ github.workflow }}
 

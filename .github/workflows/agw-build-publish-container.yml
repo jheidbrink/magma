@@ -17,12 +17,6 @@ on:
       registry:
         type: string
         description: Overwrite registry (default linuxfoundation.jfrog.io/magma-docker-agw-test).
-  push:
-    branches:
-      - master
-      - 'v1.*'
-  pull_request:
-    types: [ opened, reopened, synchronize ]
 
 env:
   registry: ${{ inputs.registry || 'linuxfoundation.jfrog.io/magma-docker-agw-test' }}

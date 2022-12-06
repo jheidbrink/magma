@@ -30,23 +30,6 @@ on:
         type: choice
         options: [ precommit, extended_tests ]
         required: true
-  workflow_call:
-    inputs:
-      digest_c:
-        type: string
-        required: true
-      digest_python:
-        type: string
-        required: true
-      digest_go:
-        type: string
-        required: true
-      registry:
-        type: string
-        required: true
-      test_targets:
-        type: string  # It seems we cannot define a choice with options in workflow_call
-        required: true
 
 jobs:
   lte-integ-test-containerized:

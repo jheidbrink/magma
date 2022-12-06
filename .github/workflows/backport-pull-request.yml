@@ -13,10 +13,7 @@
 
 name: PR Backport
 on:
-  pull_request_target:
-    types:
-      - closed
-      - labeled
+  workflow_dispatch:
 
 jobs:
   backport:

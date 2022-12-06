@@ -13,10 +13,6 @@ name: Magma Build, Publish & Test Federated Integration
 
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch: null
-  push:
-    branches:
-      - master
-      - 'v1.*'
 
 jobs:
   # Build images on ubuntu which is faster than MacOs.

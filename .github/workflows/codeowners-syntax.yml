@@ -12,13 +12,7 @@
 name: PR Check Codeowners
 
 on:
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-    paths:
-      - CODEOWNERS
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}

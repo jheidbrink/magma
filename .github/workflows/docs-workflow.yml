@@ -12,13 +12,7 @@
 name: Docs Lint & Check Generated Files In Sync
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
-    types: [ opened, reopened, synchronize ]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}

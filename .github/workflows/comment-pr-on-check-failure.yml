@@ -11,13 +11,7 @@
 
 name: PR Generate Comment On Workflow Failure
 on:
-  workflow_run:
-    workflows:
-      - PR Check DCO
-      - AGW Build & Format Python
-      - Docs Lint & Check Generated Files In Sync
-    types:
-      - completed
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.event.workflow.name }}

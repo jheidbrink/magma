@@ -25,13 +25,7 @@
 name: Magma Analyze With CodeQL
 
 on:
-  push:
-    branches: [ master, gh-pages, v1.* ]
-  pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [ master ]
-  schedule:
-    - cron: '21 5 * * 0'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}

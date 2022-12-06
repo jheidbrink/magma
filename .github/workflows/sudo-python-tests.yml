@@ -13,9 +13,6 @@ name: AGW Test Sudo Python
 
 on:
   workflow_dispatch: null
-  push:
-    branches:
-      - master
 
 env:
   CACHE_KEY: magma-dev-vm

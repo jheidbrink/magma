@@ -13,10 +13,6 @@ name: CWAG Build & Test Integration
 
 on:
   workflow_dispatch: null
-  push:
-    branches:
-      - master
-      - 'v1.*'
 
 jobs:
   docker-build:

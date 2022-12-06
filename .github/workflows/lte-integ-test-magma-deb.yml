@@ -13,8 +13,6 @@ name: AGW Test LTE Integration With Make Debian Build
 
 on:
   workflow_dispatch: null
-  repository_dispatch:
-    types: [build-all-artifact]
 
 jobs:
   lte-integ-test-magma-deb:
